@@ -1,0 +1,11 @@
+server:
+  port: 8080
+  hostname: localhost
+  read_timeout: 15
+  write_timeout: 15
+database:
+  host: localhost
+  port: 5432
+  username: root
+  password: password
+  database_name: db
