@@ -14,9 +14,14 @@ type MessageController struct {
 	Controller *database.Controller
 }
 
-func CreateMessageHandler(w http.ResponseWriter, r *http.Request) {
+func (c *MessageController) CreateMessageHandler(w http.ResponseWriter, r *http.Request) {
 	var message model.Message
 	err := json.NewDecoder(r.Body).Decode(&message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	err = c.Controller.Create(r.Context(), message)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}

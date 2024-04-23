@@ -65,6 +65,7 @@ func (a *App) Start(ctx context.Context,c config.Config ) error {
 	case <-ctx.Done():
 		timeout, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
+		log.Println("Shutting down server")
 		return server.Shutdown(timeout)
 	}
 }

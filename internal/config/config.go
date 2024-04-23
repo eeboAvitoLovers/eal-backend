@@ -44,6 +44,11 @@ func LoadConfig(filename string) (Config, error) {
 }
 
 func (c Config) CreateConnString() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s", 
-		c.Database.Username, c.Database.Password, c.Database.Host, c.Database.Port, c.Database.DatabaseName)
+	if c.Database.Port != 0 {
+		return fmt.Sprintf("postgres://%s:%s@%s:%d/%s", 
+			c.Database.Username, c.Database.Password, c.Database.Host, c.Database.Port, c.Database.DatabaseName)
+	} else {
+		return fmt.Sprintf("postgres://%s:%s@%s/%s", 
+			c.Database.Username, c.Database.Password, c.Database.Host,  c.Database.DatabaseName)
+	}
 }

@@ -21,7 +21,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 	}
 	
 
-	r.HandleFunc("/", handlers.CreateMessageHandler).Methods("POST")
+	r.HandleFunc("/", urlHandler.CreateMessageHandler).Methods("POST")
 	// r.HandleFunc("/archive", handlers.GetArchiveHandler).Methods("GET")
 	// r.HandleFunc("/list", handlers.GetMessages).Methods("GET")
 	// r.HandleFunc("/:id", handlers.GetMessageByID).Methods("GET")
