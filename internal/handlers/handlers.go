@@ -200,8 +200,8 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 	messageData := model.Message{
 		Message:  message,
 		UserID:   userID,
-		CreateAt: time.Now(),
-		UpdateAt: time.Now(),
+		CreateAt: time.Now().Format("2006-01-02 15:04:05"),
+		UpdateAt: time.Now().Format("2006-01-02 15:04:05"),
 	}
 
 	err = c.Controller.CreateMessage(r.Context(), messageData)

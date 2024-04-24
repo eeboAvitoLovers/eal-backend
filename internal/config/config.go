@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -16,10 +17,10 @@ type Config struct {
 
 // ServerConfig содержит параметры конфигурации сервера.
 type ServerConfig struct {
-	Port     int    `yaml:"port"`
-	Hostname string `yaml:"hostname"`
-	ReadTimeout int `yaml:"read_timeout"`
-	WriteTimeout int `yaml:"write_timeout"`
+	Port         int    `yaml:"port"`
+	Hostname     string `yaml:"hostname"`
+	ReadTimeout  int    `yaml:"read_timeout"`
+	WriteTimeout int    `yaml:"write_timeout"`
 }
 
 // DatabaseConfig содержит параметры конфигурации базы данных.
@@ -50,11 +51,12 @@ func LoadConfig(filename string) (Config, error) {
 
 // CreateConnString создает строку подключения к базе данных на основе параметров конфигурации.
 func (c Config) CreateConnString() string {
-	if c.Database.Port != 0 {
-		return fmt.Sprintf("postgres://%s:%s@%s:%d/%s", 
-			c.Database.Username, c.Database.Password, c.Database.Host, c.Database.Port, c.Database.DatabaseName)
-	} else {
-		return fmt.Sprintf("postgres://%s:%s@%s/%s", 
-			c.Database.Username, c.Database.Password, c.Database.Host,  c.Database.DatabaseName)
+	dbURL := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(c.Database.Username, c.Database.Password),
+		Host:   fmt.Sprintf("%s:%d", c.Database.Host, c.Database.Port),
+		Path:   c.Database.DatabaseName,
 	}
+
+	return dbURL.String()
 }

@@ -6,10 +6,10 @@ import "time"
 // Message представляет модель сообщения с полями для текста сообщения, идентификатора пользователя,
 // времени создания и времени обновления.
 type Message struct {
-	Message  string    `json:"message"`
-	UserID   int       `json:"user_id"`
-	CreateAt time.Time `json:"create_at"`
-	UpdateAt time.Time `json:"update_at"`
+	Message  string `json:"message"`
+	UserID   int    `json:"user_id"`
+	CreateAt string `json:"create_at"`
+	UpdateAt string `json:"update_at"`
 }
 
 // MessageDTO представляет модель сообщения для передачи данных на клиент.

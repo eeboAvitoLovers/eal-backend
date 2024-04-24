@@ -4,8 +4,8 @@ server:
   read_timeout: 15
   write_timeout: 15
 database:
-  host: localhost
+  host: 172.21.208.1
   port: 5432 
-  username: test_user
-  password: "test_password"
-  database_name: test_db
+  username: eebo
+  password: "E]j4<oZPUimz8–&"
+  database_name: eebo_team
