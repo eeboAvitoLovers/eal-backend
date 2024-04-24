@@ -1,3 +1,4 @@
+// Package config предоставляет функционал для загрузки и обработки конфигурационных файлов.
 package config
 
 import (
@@ -7,11 +8,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Config содержит параметры конфигурации сервера и базы данных.
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
 }
 
+// ServerConfig содержит параметры конфигурации сервера.
 type ServerConfig struct {
 	Port     int    `yaml:"port"`
 	Hostname string `yaml:"hostname"`
@@ -19,6 +22,7 @@ type ServerConfig struct {
 	WriteTimeout int `yaml:"write_timeout"`
 }
 
+// DatabaseConfig содержит параметры конфигурации базы данных.
 type DatabaseConfig struct {
 	Host         string `yaml:"host"`
 	Port         int    `yaml:"port"`
@@ -27,6 +31,7 @@ type DatabaseConfig struct {
 	DatabaseName string `yaml:"database_name"`
 }
 
+// LoadConfig загружает конфигурационный файл из указанного файла.
 func LoadConfig(filename string) (Config, error) {
 	var config Config
 
@@ -43,6 +48,7 @@ func LoadConfig(filename string) (Config, error) {
 	return config, nil
 }
 
+// CreateConnString создает строку подключения к базе данных на основе параметров конфигурации.
 func (c Config) CreateConnString() string {
 	if c.Database.Port != 0 {
 		return fmt.Sprintf("postgres://%s:%s@%s:%d/%s", 
