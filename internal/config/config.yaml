@@ -5,7 +5,7 @@ server:
   write_timeout: 15
 database:
   host: localhost
-  port: 
-  username: slave
-  password: slave
-  database_name: messages
+  port: 5432 
+  username: test_user
+  password: "test_password"
+  database_name: test_db

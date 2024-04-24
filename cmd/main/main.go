@@ -10,7 +10,8 @@ import (
 	"github.com/eeboAvitoLovers/eal-backend/internal/config"
 )
 
-const configFilename = "/home/slave/Documents/eal-backend/internal/config/config.yaml"
+const configFilename = "/app/internal/config/config.yaml"
+
 
 func main() {
 	// Загружаем конфиг из файла config.yaml
