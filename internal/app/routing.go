@@ -38,6 +38,11 @@ func (a *App) loadRoutes(r *mux.Router) {
 	r.HandleFunc("/login", urlHandler.LoginHandler).Methods("POST")
 	r.HandleFunc("/register", urlHandler.CreateUserHandler).Methods("POST")
 
+   	// Эндпоинт для перенаправления пользователей в зависимости от их роли
+    // GET / - перенаправление пользователей на /engineer/ или /specialist/ в зависимости от их роли.
+    // Также проверяется наличие у пользователя куки.
+	// r.HandleFunc("/", urlHandler.RedirectAccordingToRights).Methods("GET")
+
  	// Обработчики для инженеров
 
     // GET /engineer/ - получение списка нерешенных запросов.

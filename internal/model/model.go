@@ -31,6 +31,12 @@ type User struct {
 	IsEngineer bool   `json:"is_engineer"`
 }
 
+type UserDTO struct {
+	ID         int    `json:"ID"`
+	Email      string `json:"email"`
+	IsEngineer bool   `json:"is_engineer"`
+}
+
 // UserLogin представляет модель для аутентификации пользователя с полями для электронной почты и пароля.
 type UserLogin struct {
 	Email    string `json:"email"`
