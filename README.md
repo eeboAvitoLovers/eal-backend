@@ -10,13 +10,13 @@
 
 1) Клонирование репозитория
     ```
-    git clone git clone https://github.com/eeboAvitoLovers/eal-backend
+    git clone git clone https://github.com/437d5/avito-backend
     ```
 2) Сборка Docker контейнера
     ```
-    sudo docker build -t eal-backend
+    sudo docker build -t eal-backend .
     ```
 3) Запуск контейнера
    ```
-   sudo docker run -p 8080:8080 eal-backend
+   sudo docker run -it -p 8080:8080 eal-backend
    ```
