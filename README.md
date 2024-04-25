@@ -10,7 +10,7 @@
 
 1) Клонирование репозитория
     ```
-    git clone git clone https://github.com/437d5/avito-backend
+    git clone git clone https://github.com/eeboAvitoLovers/eal-backend
     ```
 2) Сборка Docker контейнера
     ```
