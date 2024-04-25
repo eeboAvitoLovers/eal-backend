@@ -14,7 +14,7 @@
     ```
 2) Сборка Docker контейнера
     ```
-    sudo docker build -t eal-backend
+    sudo docker build -t eal-backend .
     ```
 3) Запуск контейнера
    ```
