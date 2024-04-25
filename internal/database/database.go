@@ -22,23 +22,17 @@ type Controller struct {
 // CreateUser создает нового пользователя в базе данных.
 // Принимает контекст и данные нового пользователя.
 // Возвращает ошибку, если создание не удалось.
-func (c *Controller) CreateUser(ctx context.Context, data model.User, hp []byte) error {
+func (c *Controller) CreateUser(ctx context.Context, data model.User, hp []byte) (int, error) {
 	// SQL-запрос для вставки нового пользователя.
-	query := `INSERT INTO users (email, password, is_engineer) VALUES (@email, @password, @is_engineer);`
+	query := `INSERT INTO users (email, password, is_engineer) VALUES (@email, @password, @is_engineer) RETURNING  id;`
 	// Аргументы для передачи в SQL-запрос в виде именованных аргументов.
-	args := pgx.NamedArgs{
-		"email":       data.Email,
-		"password":    string(hp),
-		"is_engineer": data.IsEngineer,
-	}
-
-	// Выполнение SQL-запроса для создания пользователя.
-	_, err := c.Client.Exec(ctx, query, args)
+	var userID int64
+	err := c.Client.QueryRow(ctx, query, data.Email, string(hp), data.IsEngineer).Scan(&userID)
 	if err != nil {
-		return fmt.Errorf("unable to create user: %w", err)
+		return 0, fmt.Errorf("unable to create user: %w", err)
 	}
 
-	return nil
+	return int(userID), nil
 }
 
 // GetHash возвращает хешированный пароль пользователя по его email.
@@ -69,15 +63,14 @@ func (c *Controller) GetHash(ctx context.Context, email string) (string, error) 
 func (c *Controller) CreateSession(ctx context.Context, email, sessionID string, expAt time.Time) error {
 	// Получение идентификатора пользователя и информации об инженерном статусе пользователя по его email.
 	var userID int
-	var isEngineer bool
-	err := c.Client.QueryRow(ctx, "SELECT user_id, is_engineer FROM users WHERE email = $1", email).Scan(&userID, &isEngineer)
+	err := c.Client.QueryRow(ctx, "SELECT user_id FROM users WHERE email = $1", email).Scan(&userID)
 	if err != nil {
 		return fmt.Errorf("error getting user info: %w", err)
 	}
 
 	// Добавление записи о сессии в таблицу sessions.
-	_, err = c.Client.Exec(ctx, "INSERT INTO sessions (session_id, user_id, exp_at, is_engineer) VALUES ($1, $2, $3, $4)",
-		sessionID, userID, expAt, isEngineer)
+	_, err = c.Client.Exec(ctx, "INSERT INTO sessions (session_id, user_id, exp_at) VALUES ($1, $2, $3)",
+		sessionID, userID, expAt)
 	if err != nil {
 		return fmt.Errorf("error adding session: %w", err)
 	}
@@ -155,15 +148,21 @@ func (c *Controller) GetUnsolvedID(ctx context.Context, messageID int) (model.Me
 // UpdateSolvedID обновляет статус решения сообщения в базе данных по его идентификатору.
 // Принимает контекст, время обновления и идентификатор сообщения.
 // Возвращает ошибку, если обновление не удалось.
-func (c *Controller) UpdateSolvedID(ctx context.Context, updateAt time.Time, messageID int) error {
+func (c *Controller) UpdateSolvedID(ctx context.Context, updateAt time.Time, messageID int) (model.MessageDTO, error) {
 	// Установка статуса решения сообщения в true.
 	solved := true
 	// Обновление записи о сообщении в базе данных.
 	_, err := c.Client.Exec(ctx, "UPDATE messages SET solved = $1, update_at = $2 WHERE id = $3", solved, updateAt, messageID)
 	if err != nil {
-		return fmt.Errorf("unable to update solved status: %w", err)
+		return model.MessageDTO{}, fmt.Errorf("unable to update solved status: %w", err)
 	}
-	return nil
+	var message model.MessageDTO
+	message, err = c.GetUnsolvedID(ctx, messageID)
+	if err != nil {
+		return model.MessageDTO{}, fmt.Errorf("unable to get message: %w", err)
+	}
+
+	return message, nil
 }
 
 // GetUserIDBySessionID возвращает идентификатор пользователя по его идентификатору сессии.
@@ -181,13 +180,27 @@ func (c *Controller) GetUserIDBySessionID(ctx context.Context, sessionID string)
 // CreateMessage создает новое сообщение в базе данных.
 // Принимает контекст и данные нового сообщения.
 // Возвращает ошибку, если создание не удалось.
-func (c *Controller) CreateMessage(ctx context.Context, message model.Message) error {
-	_, err := c.Client.Exec(ctx, "INSERT INTO messages (message, user_id, create_at, update_at) VALUES ($1, $2, $3, $4)",
-	message.Message, message.UserID, message.CreateAt, message.UpdateAt)
+func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (model.MessageDTO, error) {
+	query := `
+        INSERT INTO messages (message, user_id, create_at, update_at)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id;
+    `
+
+    // Выполняем SQL-запрос и сканируем результаты в переменную messageID.
+    var messageID int64
+    err := c.Client.QueryRow(ctx, query, message.Message, message.UserID, message.CreateAt, message.UpdateAt).
+        Scan(&messageID)
 	if err != nil {
-		return err
+		return model.MessageDTO{}, fmt.Errorf("unable to create message: %w", err)
 	}
-	return nil
+
+	var messageResponse model.MessageDTO
+	messageResponse, err = c.GetStatusByID(ctx, int(messageID))
+	if err != nil {
+		return model.MessageDTO{}, fmt.Errorf("unable to get message: %w", err)
+	}
+	return messageResponse, nil
 } 
 
 // GetStatusByID возвращает информацию о сообщении по его идентификатору.
@@ -201,4 +214,17 @@ func (c *Controller) GetStatusByID(ctx context.Context, messageID int) (model.Me
         return model.MessageDTO{}, err
     }
     return message, nil
+}
+
+func (c *Controller) GetUserByID(ctx context.Context, userID int) (model.UserDTO, error) {
+	query := `SELECT id, email, is_engineer FROM users WHERE id = $1;`
+
+    // Используем QueryRow для выполнения запроса и сканирования результатов в структуру UserDTO.
+    var user model.UserDTO
+    err := c.Client.QueryRow(ctx, query, userID).Scan(&user.ID, &user.Email, &user.IsEngineer)
+    if err != nil {
+        return model.UserDTO{}, fmt.Errorf("error fetching user: %w", err)
+    }
+
+	return user, nil
 }

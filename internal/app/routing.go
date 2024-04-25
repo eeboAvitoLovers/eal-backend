@@ -25,6 +25,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 		},
 	}
 	
+	r.HandleFunc("/me", urlHandler.MeHandler).Methods("GET")
 	// POST /login - аутентификация пользователя по электронной почте и паролю
     // POST /register - регистрация нового пользователя
     // Оба эндпоинта ожидают JSON с электронной почтой и паролем в качестве данных.
@@ -36,11 +37,6 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// }
 	r.HandleFunc("/login", urlHandler.LoginHandler).Methods("POST")
 	r.HandleFunc("/register", urlHandler.CreateUserHandler).Methods("POST")
-
-   	// Эндпоинт для перенаправления пользователей в зависимости от их роли
-    // GET / - перенаправление пользователей на /engineer/ или /specialist/ в зависимости от их роли.
-    // Также проверяется наличие у пользователя куки.
-	r.HandleFunc("/", urlHandler.RedirectAccordingToRights).Methods("GET")
 
  	// Обработчики для инженеров
 
