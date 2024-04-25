@@ -2,6 +2,10 @@
 
 Бэкенд-приложение команды ЭЭБО для хакатона BEST-HACK
 
+## Ссылки
+* [ML Репозиторий](https://github.com/eeboAvitoLovers/eal-ml)
+* [Frontend Репозиторий](https://github.com/eeboAvitoLovers/eal-frontend)
+
 ## Конфигурация
 
 Файл конфигурации `config.yaml` находится в `./internal/config/config.yaml`
@@ -37,7 +41,7 @@
 
 ## Database scheme
 
-База данных PostgreSQL
+База данных PostgreSQL лежит на арендованном VPS сервере.
 
 ![image](https://github.com/eeboAvitoLovers/eal-backend/assets/145232152/5c36547e-81f6-42fd-89ff-f5c52a5e26b2)
 
