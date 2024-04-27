@@ -34,6 +34,10 @@ func (c *MessageController) CreateUserHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	userID, err := c.Controller.CreateUser(r.Context(), user, hashedPassword)
 	if err != nil {
@@ -152,6 +156,9 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 	sessionCookie, _ := r.Cookie("session_id")
 	sessionID := sessionCookie.Value
 	userID, err := c.Controller.GetUserIDBySessionID(r.Context(), sessionID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	messageData := model.Message{
 		Message:  message,
 		UserID:   userID,
@@ -268,7 +275,7 @@ func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	if isEngineer {
+	if !isEngineer {
 		http.Error(w, "no rights", http.StatusForbidden)
 		return
 	}
@@ -364,7 +371,7 @@ func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	if isEngineer {
+	if !isEngineer {
 		http.Error(w, "no rigths", http.StatusForbidden)
 		return
 	}
@@ -402,6 +409,49 @@ func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(&message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (c *MessageController) GetMyTickets(w http.ResponseWriter, r *http.Request) {
+	isEngineer, err := c.UserHasAcess(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	if !isEngineer {
+		http.Error(w, "no rigths", http.StatusForbidden)
+		return
+	}
+	
+	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+    limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	log.Print("get my tickets func", offset, limit)
+
+	sessionCookie, _ := r.Cookie("session_id")
+	sessionID := sessionCookie.Value
+	resolverID, err := c.Controller.GetUserIDBySessionID(r.Context(), sessionID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	response, err := c.Controller.GetMyTickets(r.Context(), limit, offset, resolverID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(&response)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

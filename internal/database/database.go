@@ -25,14 +25,6 @@ type Controller struct {
 // Принимает контекст и данные нового пользователя.
 // Возвращает ошибку, если создание не удалось.
 func (c *Controller) CreateUser(ctx context.Context, data model.User, hp []byte) (int, error) {
-	// SQL-запрос для вставки нового пользователя.
-	// query := `INSERT INTO users (email, password, is_engineer) VALUES (@email, @password, @is_engineer) RETURNING  id;`
-	// // Аргументы для передачи в SQL-запрос в виде именованных аргументов.
-	// var userID int64
-	// err := c.Client.QueryRow(ctx, query, data.Email, string(hp), data.IsEngineer).Scan(&userID)
-	// if err != nil {
-	// 	return 0, fmt.Errorf("unable to create user: %w", err)
-	// }
 	var userID int64
 	err := c.Client.QueryRow(ctx, "INSERT INTO users (email, password, is_engineer) VALUES ($1, $2, $3) RETURNING  id;",
 		data.Email, string(hp), data.IsEngineer).Scan(&userID)
@@ -138,44 +130,6 @@ func (c *Controller) GetUnsolved(ctx context.Context) ([]model.MessageDTO, error
 	return messages, nil
 }
 
-// GetUnsolvedID возвращает информацию о нерешенном сообщении по его идентификатору.
-// Принимает контекст и идентификатор сообщения.
-// Возвращает информацию о сообщении и ошибку, если сообщение не найдено или произошла ошибка.
-// func (c *Controller) GetUnsolvedID(ctx context.Context, messageID int) (model.MessageDTO, error) {
-// 	var message model.MessageDTO
-// 	// Запрос к базе данных для получения информации о сообщении по его идентификатору.
-// 	err := c.Client.QueryRow(ctx, "SELECT id, message, user_id, create_at, update_at, solved FROM messages WHERE id = $1 AND solved=false", messageID).Scan(
-// 		&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved)
-
-// 	if err.Error() == "no rows in result set" {
-// 		return model.MessageDTO{}, fmt.Errorf("no message with provided id")
-// 	} else if err != nil {
-// 		return model.MessageDTO{}, fmt.Errorf("error querying row: %w", err)
-// 	}
-
-// 	return message, nil
-// }
-
-// UpdateSolvedID обновляет статус решения сообщения в базе данных по его идентификатору.
-// Принимает контекст, время обновления и идентификатор сообщения.
-// Возвращает ошибку, если обновление не удалось.
-// func (c *Controller) UpdateStatusID(ctx context.Context, updateAt time.Time, resolverID, messageID int) (model.MessageDTO, error) {
-// 	// Установка статуса решения сообщения в true.
-// 	solved := true
-// 	// Обновление записи о сообщении в базе данных.
-// 	_, err := c.Client.Exec(ctx, "UPDATE messages SET solved = $1, update_at = $2 WHERE id = $3", solved, updateAt, messageID)
-// 	if err != nil {
-// 		return model.MessageDTO{}, fmt.Errorf("unable to update solved status: %w", err)
-// 	}
-// 	var message model.MessageDTO
-// 	message, err = c.GetUnsolvedID(ctx, messageID)
-// 	if err != nil {
-// 		return model.MessageDTO{}, fmt.Errorf("unable to get message: %w", err)
-// 	}
-
-// 	return message, nil
-// }
-
 // GetUserIDBySessionID возвращает идентификатор пользователя по его идентификатору сессии.
 // Принимает контекст и идентификатор сессии.
 // Возвращает идентификатор пользователя и ошибку, если сессия не найдена или произошла ошибка.
@@ -240,7 +194,6 @@ func (c *Controller) GetUserByID(ctx context.Context, userID int) (model.UserDTO
 	return user, nil
 }
 
-// TODO переделать когда исправим статусы
 func (c *Controller) GetTicketList(ctx context.Context, status string, offset, limit int) (model.GetTicketListStruct, error) {
 	messages := make([]model.MessageDTO, 0, limit)
 	rows, err := c.Client.Query(ctx, "SELECT * FROM messages WHERE solved=$1 LIMIT $2 OFFSET $3", status, limit, offset)
@@ -341,4 +294,44 @@ func (c *Controller) GetUnsolvedTicket(ctx context.Context, ticketID, resolverID
 	}
 
 	return ticket, nil
+}
+
+func (c *Controller) GetMyTickets(ctx context.Context, limit, offset, userID int) (model.GetTicketListStruct, error) {
+	messages := make([]model.MessageDTO, 0, limit)
+	rows, err := c.Client.Query(ctx, "SELECT * FROM messages WHERE resolver_id=$1 LIMIT $2 OFFSET $3", userID, limit, offset)
+	if err != nil {
+		return model.GetTicketListStruct{}, err
+	}
+	defer rows.Close()
+	var resolverID sql.NullInt64
+	for rows.Next() {
+		var message model.MessageDTO
+		err := rows.Scan(&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved, &resolverID, &message.WorkStartDate)
+		if err != nil {
+			return model.GetTicketListStruct{}, err
+		}
+		message.ResolverID = int(resolverID.Int64)
+		messages = append(messages, message)
+	}
+
+	var cnt int
+	query := `SELECT COUNT(*) FROM messages WHERE resolver_id=$1`
+	conn, err := c.Client.Acquire(ctx)
+    if err != nil {
+        return model.GetTicketListStruct{}, err
+    }
+    defer conn.Release()
+
+	row := conn.QueryRow(ctx, query, userID)
+    err = row.Scan(&cnt)
+    if err != nil {
+        return model.GetTicketListStruct{}, err
+    }
+
+	response := model.GetTicketListStruct{
+		Messages: messages,
+		Total:    cnt,
+	}
+
+	return response, nil
 }

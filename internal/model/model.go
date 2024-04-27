@@ -61,3 +61,9 @@ type GetTicketListStruct struct {
 	Messages []MessageDTO `json:"messages"`
 	Total    int          `json:"total"`
 }
+
+type AvgTime struct {
+	AcceptedInProgress time.Time `json:"accepted_in_progress"`
+	AcceptedSolved     time.Time `json:"accepted_solved"`
+	InProgressSolved   time.Time `json:"in_progress_solved"`
+}
