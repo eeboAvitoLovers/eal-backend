@@ -125,113 +125,6 @@ func (c *MessageController) LoginHandler(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// GetUnsolved возвращает нерешенные сообщения из базы данных.
-// Принимает HTTP-запрос и возвращает нерешенные сообщения в формате JSON.
-// В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
-func (c *MessageController) GetUnsolved(w http.ResponseWriter, r *http.Request) {
-	
-	isEngineer, err := c.UserHasAcess(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-	if !isEngineer {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-
-	var messages []model.MessageDTO
-	messages, err = c.Controller.GetUnsolved(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	err = json.NewEncoder(w).Encode(&messages)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-// GetUnsolvedID возвращает нерешенное сообщение по его идентификатору из базы данных.
-// Принимает HTTP-запрос и идентификатор сообщения.
-// В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
-func (c *MessageController) GetUnsolvedID(w http.ResponseWriter, r *http.Request) {
-	
-	_, err := c.UserHasAcess(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	message, err := c.Controller.GetUnsolvedID(r.Context(), id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	err = json.NewEncoder(w).Encode(&message)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-}
-
-// UpdateSolvedID обновляет статус решения сообщения в базе данных по его идентификатору.
-// Принимает HTTP-запрос и идентификатор сообщения.
-// В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
-func (c *MessageController) UpdateSolvedID(w http.ResponseWriter, r *http.Request) {
-	
-	isEngineer, err := c.UserHasAcess(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-	if !isEngineer {
-		http.Error(w, err.Error(), http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	timeNow := time.Now()
-	messageResponse, err := c.Controller.UpdateSolvedID(r.Context(), timeNow, id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	err = json.NewEncoder(w).Encode(&messageResponse)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-}
-
 // CreateMessage создает новое сообщение в базе данных.
 // Принимает HTTP-запрос и данные нового сообщения.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
@@ -264,6 +157,9 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 		UserID:   userID,
 		CreateAt: time.Now().Format("2006-01-02 15:04:05"),
 		UpdateAt: time.Now().Format("2006-01-02 15:04:05"),
+		Solved: "in_queue",
+		ResolverID: 0,
+		WorkStartDate: time.Unix(0, 0).Format("2006-01-02 15:04:05"),
 	}
 
 	messageID, err := c.Controller.CreateMessage(r.Context(), messageData)
@@ -290,12 +186,6 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 // TODO заменить мапу
 func (c *MessageController) GetStatusByID(w http.ResponseWriter, r *http.Request) {
-	
-	m := map[bool]string{
-		true: "solved",
-		false: "accepted",
-	}
-
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -314,19 +204,10 @@ func (c *MessageController) GetStatusByID(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	messageResponse := model.MessageResponse{
-		ID: message.ID,      
-		Message:  message.Message,
-		UserID:   message.UserID,
-		CreateAt: message.CreateAt,
-		UpdateAt: message.UpdateAt,
-		Solved:   m[message.Solved],
-	}
 	w.Header().Set("Content-Type", "application/json")
 	// w.WriteHeader(http.StatusOK)
 
-	err = json.NewEncoder(w).Encode(&messageResponse)
+	err = json.NewEncoder(w).Encode(&message)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -380,17 +261,16 @@ func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// TODO переделать когда исправим статусы
+
 func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request) {
-	_, err := c.UserHasAcess(r)
+	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-
-	m := map[string]bool{
-		"solved": true,
-		"accepted": false,
+	if isEngineer {
+		http.Error(w, "no rights", http.StatusForbidden)
+		return
 	}
 	
 	status := r.URL.Query().Get("status")
@@ -404,10 +284,12 @@ func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Print("status:",status,"offset:", offset,"limit:", limit, m[status])
+	log.Print(status, offset, limit)
 
-	statusTF := m[status]
-	tickets, err := c.Controller.GetTicketList(r.Context(), statusTF, offset, limit)
+	tickets, err := c.Controller.GetTicketList(r.Context(), status, offset, limit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
 	err = json.NewEncoder(w).Encode(&tickets)
 	if err != nil {
@@ -426,6 +308,102 @@ func (c *MessageController) LogoutHandler(w http.ResponseWriter, r *http.Request
 	err = c.Controller.DeleteSession(r.Context(), sessionCookie.Value)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
+}
+
+func (c *MessageController) GetUnsolvedTicket(w http.ResponseWriter, r *http.Request) {
+	_, err := c.UserHasAcess(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	var requestBody map[string]interface{}
+
+	err = json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ticketIDStr, ok := requestBody["number"].(string)
+	if !ok {
+		http.Error(w, "invalid number format", http.StatusBadRequest)
+		return
+	}
+
+	ticketID, err := strconv.Atoi(ticketIDStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	vars := mux.Vars(r)
+	resolverID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	message, err := c.Controller.GetUnsolvedTicket(r.Context(), ticketID, resolverID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(&message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http.Request) {
+	isEngineer, err := c.UserHasAcess(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	if isEngineer {
+		http.Error(w, "no rigths", http.StatusForbidden)
+		return
+	}
+
+	type status struct {
+		Status string `json:"status"`
+	}
+	var statusStr status
+	err = json.NewDecoder(r.Body).Decode(&statusStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	sessionCookie, _ := r.Cookie("session_id")
+	sessionID := sessionCookie.Value
+
+	userID, err := c.Controller.GetUserIDBySessionID(r.Context(), sessionID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Print("change ticket status", "id", id, "userID", userID, "status", statusStr)
+	message, err := c.Controller.UpdateStatusInProgress(r.Context(), id, userID, statusStr.Status)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(&message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

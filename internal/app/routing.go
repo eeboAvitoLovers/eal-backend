@@ -37,54 +37,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// }
 	r.HandleFunc("/login/", urlHandler.LoginHandler).Methods("POST")
 	r.HandleFunc("/register/", urlHandler.CreateUserHandler).Methods("POST")
-	r.HandleFunc("/logout", urlHandler.LogoutHandler).Methods("GET")
-
-   	// Эндпоинт для перенаправления пользователей в зависимости от их роли
-    // GET / - перенаправление пользователей на /engineer/ или /specialist/ в зависимости от их роли.
-    // Также проверяется наличие у пользователя куки.
-	// r.HandleFunc("/", urlHandler.RedirectAccordingToRights).Methods("GET")
-
- 	// Обработчики для инженеров
-
-    // GET /engineer/ - получение списка нерешенных запросов.
-    // Ответ в формате JSON.
-	// Пример JSON ответа.
-	// [{
-	// 	"id": 1234,
-	// 	"message": "Привет сломался возврат средств",
-	// 	"user_id": 127400,
-	// 	"create_at": 128754691200,
-	// 	"update_at": 12849013290,
-	// 	"solved": true
-	// },
-	// {
-	// 	"id": 2134,
-	// 	"message": "Привет сломались уведомления об остатке средств",
-	// 	"user_id": 23556,
-	// 	"create_at": 8938691200,
-	// 	"update_at": 12847162491,
-	// 	"solved": true
-	// }]
-	// 200 OK
-	r.HandleFunc("/engineer/", urlHandler.GetUnsolved).Methods("GET")
-
-   	// GET /engineer/{id} - получение одного нерешенного запроса по его идентификатору.
-    // Ответ в формате JSON.
-	// Пример JSON ответа.
-	// {
-	// 	"id": 1234,
-	// 	"message": "Привет сломался возврат средств",
-	// 	"user_id": 127400,
-	// 	"create_at": 128754691200,
-	// 	"update_at": 12849013290,
-	// 	"solved": true
-	// }
-	// return 200 OK
-	r.HandleFunc("/engineer/{id}", urlHandler.GetUnsolvedID).Methods("GET")
-
-    // PUT /engineer/{id} - помечает запрос с указанным идентификатором как решенный.
-    // Возвращает код состояния 200 OK.
-	r.HandleFunc("/engineer/{id}", urlHandler.UpdateSolvedID).Methods("PUT")
+	// r.HandleFunc("/logout", urlHandler.LogoutHandler).Methods("GET")
 
     // Обработчики для специалистов
 
@@ -96,7 +49,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// 	"message": "Привет сломался вывод средств"
 	// }
 	// response 201 Created
-	r.HandleFunc("/ticket/", urlHandler.CreateMessage).Methods("POST")
+	r.HandleFunc("/ticket", urlHandler.CreateMessage).Methods("POST")
 
     // GET /ticket/{id} - получение информации о запросе по его идентификатору.
     // Ответ в формате JSON.
@@ -111,10 +64,13 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// }
 	// response 200 OK
 	r.HandleFunc("/ticket/{id}", urlHandler.GetStatusByID).Methods("GET")
-
-	// r.HandleFunc("/ticket/{id}", urlHandler.UpdateStatusByID).Methods("PUT")	
-
-
+	r.HandleFunc("/ticket/{id}", urlHandler.UpdateStatusInProcess).Methods("PUT")	
 	// Выводит список сообщений с указанным статусом
-	r.HandleFunc("/ticket/", urlHandler.GetTicketList).Queries("status", "{status}", "offset", "{offset}", "limit", "{limit}")
+	r.HandleFunc("/ticket/", urlHandler.GetTicketList).Queries("status", "{status}", "offset", "{offset}", "limit", "{limit}").Methods("GET")
+	r.HandleFunc("/specialist/{id}/tickets", urlHandler.GetUnsolvedTicket).Methods("POST")
+
+	//TODO
+	// r.HandleFunc("/specialist/{id}/tickets", urlHandler.GetUnsolvedID).Methods("POST")
+	// r.HandleFunc("/tickets/analytics", urlHandler.Analytics).Methods("GET")
+	// r.HandleFunc("/specialist/{id}/tickets").Queries("offset", "{offset}", "limit", "{limit}").Methods("GET")
 }

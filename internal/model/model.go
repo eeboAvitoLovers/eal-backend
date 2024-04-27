@@ -6,22 +6,27 @@ import "time"
 // Message представляет модель сообщения с полями для текста сообщения, идентификатора пользователя,
 // времени создания и времени обновления.
 type Message struct {
-	Message  string `json:"message"`
-	UserID   int    `json:"user_id"`
-	CreateAt string `json:"create_at"`
-	UpdateAt string `json:"update_at"`
+	Message       string `json:"message"`
+	UserID        int    `json:"user_id"`
+	CreateAt      string `json:"create_at"`
+	UpdateAt      string `json:"update_at"`
+	Solved        string `json:"solved,omitempty"`
+	ResolverID    int    `json:"resolver_id"`
+	WorkStartDate string `json:"work_start_date"`
 }
 
 // MessageDTO представляет модель сообщения для передачи данных на клиент.
 // Включает в себя идентификатор сообщения, текст сообщения, идентификатор пользователя,
 // время создания, время обновления и флаг решения сообщения.
 type MessageDTO struct {
-	ID       int       `json:"id"`
-	Message  string    `json:"message"`
-	UserID   int       `json:"user_id"`
-	CreateAt time.Time `json:"create_at"`
-	UpdateAt time.Time `json:"update_at"`
-	Solved   bool      `json:"solved,omitempty"`
+	ID            int       `json:"id,omitempty"`
+	Message       string    `json:"message"`
+	UserID        int       `json:"user_id"`
+	CreateAt      time.Time `json:"create_at"`
+	UpdateAt      time.Time `json:"update_at"`
+	Solved        string    `json:"solved,omitempty"`
+	ResolverID    int       `json:"resolver_id"`
+	WorkStartDate time.Time `json:"work_start_date"`
 }
 
 // User представляет модель пользователя с полями для электронной почты, пароля и флага инженера.
@@ -53,6 +58,6 @@ type MessageResponse struct {
 }
 
 type GetTicketListStruct struct {
-	Messages []MessageResponse `json:"messages"`
-	Total    int               `json:"total"`
+	Messages []MessageDTO `json:"messages"`
+	Total    int          `json:"total"`
 }
