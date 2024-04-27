@@ -234,28 +234,34 @@ func (c *Controller) GetUserByID(ctx context.Context, userID int) (model.UserDTO
 }
 
 // TODO переделать когда исправим статусы
-func (c *Controller) GetTicketList(ctx context.Context, status bool, offset, limit int) ([]model.MessageResponse, error) {
-	response := make([]model.MessageResponse, 0, limit)
-	rows, err := c.Client.Query(ctx, "SELECT * FROM tickets LIMIT $1 OFFSET $2", limit, offset)
+func (c *Controller) GetTicketList(ctx context.Context, status bool, offset, limit int) (model.GetTicketListStruct, error) {
+	messages := make([]model.MessageResponse, 0, limit)
+	rows, err := c.Client.Query(ctx, "SELECT * FROM messages LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
-		return []model.MessageResponse{}, err
+		return model.GetTicketListStruct{}, err
 	}
 	defer rows.Close()
 
 	m := map[bool]string{
-		true: "solved",
+		true:  "solved",
 		false: "accepted",
 	}
-
+	var cnt int
 	for rows.Next() {
+		cnt++
 		var message model.MessageResponse
 		var status bool
 		err := rows.Scan(&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &status)
 		message.Solved = m[status]
 		if err != nil {
-			return []model.MessageResponse{}, err
+			return model.GetTicketListStruct{}, err
 		}
-		response = append(response, message)
+		messages = append(messages, message)
+	}
+
+	response := model.GetTicketListStruct{
+		Messages: messages,
+		Total:    cnt,
 	}
 
 	return response, nil

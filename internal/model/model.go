@@ -51,3 +51,8 @@ type MessageResponse struct {
 	UpdateAt time.Time `json:"update_at"`
 	Solved   string    `json:"solved"`
 }
+
+type GetTicketListStruct struct {
+	Messages []MessageResponse `json:"messages"`
+	Total    int               `json:"total"`
+}
