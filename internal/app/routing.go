@@ -79,11 +79,11 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// 	"solved": true
 	// }
 	// return 200 OK
-	r.HandleFunc("/engineer/:id", urlHandler.GetUnsolvedID).Methods("GET")
+	r.HandleFunc("/engineer/{id}", urlHandler.GetUnsolvedID).Methods("GET")
 
     // PUT /engineer/{id} - помечает запрос с указанным идентификатором как решенный.
     // Возвращает код состояния 200 OK.
-	r.HandleFunc("/engineer/:id", urlHandler.UpdateSolvedID).Methods("PUT")
+	r.HandleFunc("/engineer/{id}", urlHandler.UpdateSolvedID).Methods("PUT")
 
     // Обработчики для специалистов
 
@@ -109,5 +109,5 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// 	"solved": true
 	// }
 	// response 200 OK
-	r.HandleFunc("/specialist/:id", urlHandler.GetStatusByID).Methods("GET")
+	r.HandleFunc("/specialist/{id}", urlHandler.GetStatusByID).Methods("GET")
 }

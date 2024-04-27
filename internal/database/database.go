@@ -145,7 +145,10 @@ func (c *Controller) GetUnsolvedID(ctx context.Context, messageID int) (model.Me
 	// Запрос к базе данных для получения информации о сообщении по его идентификатору.
 	err := c.Client.QueryRow(ctx, "SELECT id, message, user_id, create_at, update_at, solved FROM messages WHERE id = $1 AND solved=false", messageID).Scan(
 		&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved)
-	if err != nil {
+	
+	if err.Error() == "no rows in result set" {
+		return model.MessageDTO{}, fmt.Errorf("no message with provided id")
+	} else if err != nil {
 		return model.MessageDTO{}, fmt.Errorf("error querying row: %w", err)
 	}
 
