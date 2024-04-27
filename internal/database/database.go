@@ -190,7 +190,7 @@ func (c *Controller) GetUserIDBySessionID(ctx context.Context, sessionID string)
 // CreateMessage создает новое сообщение в базе данных.
 // Принимает контекст и данные нового сообщения.
 // Возвращает ошибку, если создание не удалось.
-func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (model.MessageDTO, error) {
+func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (int, error) {
 	query := `
         INSERT INTO messages (message, user_id, create_at, update_at)
         VALUES ($1, $2, $3, $4)
@@ -202,15 +202,9 @@ func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (
     err := c.Client.QueryRow(ctx, query, message.Message, message.UserID, message.CreateAt, message.UpdateAt).
         Scan(&messageID)
 	if err != nil {
-		return model.MessageDTO{}, fmt.Errorf("unable to create message: %w", err)
+		return 0, fmt.Errorf("unable to create message: %w", err)
 	}
-
-	var messageResponse model.MessageDTO
-	messageResponse, err = c.GetStatusByID(ctx, int(messageID))
-	if err != nil {
-		return model.MessageDTO{}, fmt.Errorf("unable to get message: %w", err)
-	}
-	return messageResponse, nil
+	return int(messageID), nil
 } 
 
 // GetStatusByID возвращает информацию о сообщении по его идентификатору.
@@ -218,7 +212,7 @@ func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (
 // Возвращает информацию о сообщении и ошибку, если сообщение не найдено или произошла ошибка.
 func (c *Controller) GetStatusByID(ctx context.Context, messageID int) (model.MessageDTO, error) {
     var message model.MessageDTO
-    err := c.Client.QueryRow(ctx, "SELECT id, message, user_id, create_at, update_at, edit_at, solved FROM messages WHERE id = $1", messageID).
+    err := c.Client.QueryRow(ctx, "SELECT id, message, user_id, create_at, update_at, solved FROM messages WHERE id = $1", messageID).
         Scan(&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved)
     if err != nil {
         return model.MessageDTO{}, err

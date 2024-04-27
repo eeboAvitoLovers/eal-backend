@@ -243,22 +243,24 @@ func (c *MessageController) UpdateSolvedID(w http.ResponseWriter, r *http.Reques
 func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-	isEngineer, err := c.UserHasAcess(r)
+	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	if !isEngineer {
-		http.Error(w, err.Error(), http.StatusForbidden)
-		return
-	}
 
-	var message string
-	err = json.NewDecoder(r.Body).Decode(&message)
+	var requestBody map[string]interface{}
+	err = json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	message, ok := requestBody["message"].(string)
+    if !ok {
+        http.Error(w, "invalid JSON structure: message field is missing or not a string", http.StatusBadRequest)
+        return
+    }
 
 	sessionCookie, _ := r.Cookie("session_id")
 	sessionID := sessionCookie.Value
@@ -270,16 +272,18 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 		UpdateAt: time.Now().Format("2006-01-02 15:04:05"),
 	}
 
-	messageResponse, err := c.Controller.CreateMessage(r.Context(), messageData)
+	messageID, err := c.Controller.CreateMessage(r.Context(), messageData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	responseData := map[string]int{"id": messageID}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	err = json.NewEncoder(w).Encode(&messageResponse)
+	err = json.NewEncoder(w).Encode(&responseData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -290,17 +294,18 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 // GetStatusByID возвращает информацию о сообщении по его идентификатору.
 // Принимает HTTP-запрос и идентификатор сообщения.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
+// TODO заменить мапу
 func (c *MessageController) GetStatusByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	m := map[bool]string{
+		true: "solved",
+		false: "accepted",
+	}
 
-	isEngineer, err := c.UserHasAcess(r)
+	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-	if !isEngineer {
-		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 
@@ -317,10 +322,18 @@ func (c *MessageController) GetStatusByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	messageResponse := model.MessageResponse{
+		ID: message.ID,      
+		Message:  message.Message,
+		UserID:   message.UserID,
+		CreateAt: message.CreateAt,
+		UpdateAt: message.UpdateAt,
+		Solved:   m[message.Solved],
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	// w.WriteHeader(http.StatusOK)
 
-	err = json.NewEncoder(w).Encode(&message)
+	err = json.NewEncoder(w).Encode(&messageResponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

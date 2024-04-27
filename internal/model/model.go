@@ -42,3 +42,12 @@ type UserLogin struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+type MessageResponse struct {
+	ID       int       `json:"id"`
+	Message  string    `json:"message"`
+	UserID   int       `json:"user_id"`
+	CreateAt time.Time `json:"create_at"`
+	UpdateAt time.Time `json:"update_at"`
+	Solved   string    `json:"solved"`
+}

@@ -25,7 +25,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 		},
 	}
 	
-	r.HandleFunc("/me", urlHandler.MeHandler).Methods("GET")
+	r.HandleFunc("/me/", urlHandler.MeHandler).Methods("GET")
 	// POST /login - аутентификация пользователя по электронной почте и паролю
     // POST /register - регистрация нового пользователя
     // Оба эндпоинта ожидают JSON с электронной почтой и паролем в качестве данных.
@@ -35,8 +35,8 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// 	"email": "ovchark4@yandex.ru",
 	// 	"password": "812749iasldf83"
 	// }
-	r.HandleFunc("/login", urlHandler.LoginHandler).Methods("POST")
-	r.HandleFunc("/register", urlHandler.CreateUserHandler).Methods("POST")
+	r.HandleFunc("/login/", urlHandler.LoginHandler).Methods("POST")
+	r.HandleFunc("/register/", urlHandler.CreateUserHandler).Methods("POST")
 
    	// Эндпоинт для перенаправления пользователей в зависимости от их роли
     // GET / - перенаправление пользователей на /engineer/ или /specialist/ в зависимости от их роли.
@@ -87,7 +87,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 
     // Обработчики для специалистов
 
-    // POST /specialist/ - создает новый запрос.
+    // POST /ticket - создает новый запрос.
     // Запрос должен содержать JSON с текстом сообщения.
     // Возвращает код состояния 201 Created.
 	// Пример JSON запроса 
@@ -95,9 +95,9 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// 	"message": "Привет сломался вывод средств"
 	// }
 	// response 201 Created
-	r.HandleFunc("/specialist/", urlHandler.CreateMessage).Methods("POST")
+	r.HandleFunc("/ticket/", urlHandler.CreateMessage).Methods("POST")
 
-    // GET /specialist/{id} - получение информации о запросе по его идентификатору.
+    // GET /ticket/{id} - получение информации о запросе по его идентификатору.
     // Ответ в формате JSON.
 	// Пример JSON ответа
 	// {
@@ -106,8 +106,14 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// 	"user_id": 127400,
 	// 	"create_at": 128754691200,
 	// 	"update_at": 12849013290,
-	// 	"solved": true
+	// 	"solved": "solved"
 	// }
 	// response 200 OK
-	r.HandleFunc("/specialist/{id}", urlHandler.GetStatusByID).Methods("GET")
+	r.HandleFunc("/ticket/{id}", urlHandler.GetStatusByID).Methods("GET")
+
+	// r.HandleFunc("/ticket/{id}", urlHandler.UpdateStatusByID).Methods("PUT")
+
+
+	// Выводит список сообщений с указанным статусом
+	// r.HandleFunc("/ticket/", urlHandler.GetTicketList).Queries("status", "{status}", "offset", "{offset}", "limit", "{limit}")
 }
