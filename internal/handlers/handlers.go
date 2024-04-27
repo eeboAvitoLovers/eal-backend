@@ -166,7 +166,6 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 		UpdateAt: time.Now().Format("2006-01-02 15:04:05"),
 		Solved: "in_queue",
 		ResolverID: 0,
-		WorkStartDate: time.Unix(0, 0).Format("2006-01-02 15:04:05"),
 	}
 
 	messageID, err := c.Controller.CreateMessage(r.Context(), messageData)
@@ -379,6 +378,7 @@ func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http
 	type status struct {
 		Status string `json:"status"`
 	}
+	
 	var statusStr status
 	err = json.NewDecoder(r.Body).Decode(&statusStr)
 	if err != nil {
@@ -449,7 +449,7 @@ func (c *MessageController) GetMyTickets(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(&response)
 	if err != nil {

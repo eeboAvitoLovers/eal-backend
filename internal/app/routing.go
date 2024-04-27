@@ -49,7 +49,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// 	"message": "Привет сломался вывод средств"
 	// }
 	// response 201 Created
-	r.HandleFunc("/ticket", urlHandler.CreateMessage).Methods("POST")
+	r.HandleFunc("/ticket/", urlHandler.CreateMessage).Methods("POST")
 
     // GET /ticket/{id} - получение информации о запросе по его идентификатору.
     // Ответ в формате JSON.
@@ -64,10 +64,13 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// }
 	// response 200 OK
 	r.HandleFunc("/ticket/{id}", urlHandler.GetStatusByID).Methods("GET")
+	// обновляет статус тикета на указанный
 	r.HandleFunc("/ticket/{id}", urlHandler.UpdateStatusInProcess).Methods("PUT")	
 	// Выводит список сообщений с указанным статусом
 	r.HandleFunc("/ticket/", urlHandler.GetTicketList).Queries("status", "{status}", "offset", "{offset}", "limit", "{limit}").Methods("GET")
+	// Присваивает тикет инженеру
 	r.HandleFunc("/specialist/{id}/tickets", urlHandler.GetUnsolvedTicket).Methods("POST")
+	// Выводит список тикетов принадлежащих инженеру
 	r.HandleFunc("/specialist/{id}/tickets", urlHandler.GetMyTickets).Queries("offset", "{offset}", "limit", "{limit}").Methods("GET")
 
 	//TODO

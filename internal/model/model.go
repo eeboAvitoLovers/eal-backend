@@ -6,27 +6,25 @@ import "time"
 // Message представляет модель сообщения с полями для текста сообщения, идентификатора пользователя,
 // времени создания и времени обновления.
 type Message struct {
-	Message       string `json:"message"`
-	UserID        int    `json:"user_id"`
-	CreateAt      string `json:"create_at"`
-	UpdateAt      string `json:"update_at"`
-	Solved        string `json:"solved,omitempty"`
-	ResolverID    int    `json:"resolver_id"`
-	WorkStartDate string `json:"work_start_date"`
+	Message    string `json:"message"`
+	UserID     int    `json:"user_id"`
+	CreateAt   string `json:"create_at"`
+	UpdateAt   string `json:"update_at"`
+	Solved     string `json:"solved,omitempty"`
+	ResolverID int    `json:"resolver_id"`
 }
 
 // MessageDTO представляет модель сообщения для передачи данных на клиент.
 // Включает в себя идентификатор сообщения, текст сообщения, идентификатор пользователя,
 // время создания, время обновления и флаг решения сообщения.
 type MessageDTO struct {
-	ID            int       `json:"id,omitempty"`
-	Message       string    `json:"message"`
-	UserID        int       `json:"user_id"`
-	CreateAt      time.Time `json:"create_at"`
-	UpdateAt      time.Time `json:"update_at"`
-	Solved        string    `json:"solved,omitempty"`
-	ResolverID    int       `json:"resolver_id"`
-	WorkStartDate time.Time `json:"work_start_date"`
+	ID         int       `json:"id,omitempty"`
+	Message    string    `json:"message"`
+	UserID     int       `json:"user_id"`
+	CreateAt   time.Time `json:"create_at"`
+	UpdateAt   time.Time `json:"update_at"`
+	Solved     string    `json:"solved,omitempty"`
+	ResolverID int       `json:"resolver_id"`
 }
 
 // User представляет модель пользователя с полями для электронной почты, пароля и флага инженера.
