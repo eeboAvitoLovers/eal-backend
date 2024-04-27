@@ -382,8 +382,6 @@ func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
 
 // TODO переделать когда исправим статусы
 func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -415,4 +413,19 @@ func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (c *MessageController) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := c.UserHasAcess(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	sessionCookie, _ := r.Cookie("session_id")
+	err = c.Controller.DeleteSession(r.Context(), sessionCookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 }

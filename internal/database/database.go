@@ -7,7 +7,6 @@ package database
 import (
 	"context"
 	"fmt"
-	// "strings"
 	"time"
 
 	"github.com/eeboAvitoLovers/eal-backend/internal/model"
@@ -265,4 +264,16 @@ func (c *Controller) GetTicketList(ctx context.Context, status bool, offset, lim
 	}
 
 	return response, nil
+}
+
+
+func (c *Controller) DeleteSession(ctx context.Context, sessionID string) error {
+	query := `DELETE FROM sessions WHERE session_id=$1`
+
+	_, err := c.Client.Exec(ctx, query, sessionID)
+	if err != nil {
+		return fmt.Errorf("error deleting session: %w", err)
+	}
+
+	return nil
 }
