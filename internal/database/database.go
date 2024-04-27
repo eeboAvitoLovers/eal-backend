@@ -7,6 +7,7 @@ package database
 import (
 	"context"
 	"fmt"
+	// "strings"
 	"time"
 
 	"github.com/eeboAvitoLovers/eal-backend/internal/model"
@@ -24,12 +25,18 @@ type Controller struct {
 // Возвращает ошибку, если создание не удалось.
 func (c *Controller) CreateUser(ctx context.Context, data model.User, hp []byte) (int, error) {
 	// SQL-запрос для вставки нового пользователя.
-	query := `INSERT INTO users (email, password, is_engineer) VALUES (@email, @password, @is_engineer) RETURNING  id;`
-	// Аргументы для передачи в SQL-запрос в виде именованных аргументов.
+	// query := `INSERT INTO users (email, password, is_engineer) VALUES (@email, @password, @is_engineer) RETURNING  id;`
+	// // Аргументы для передачи в SQL-запрос в виде именованных аргументов.
+	// var userID int64
+	// err := c.Client.QueryRow(ctx, query, data.Email, string(hp), data.IsEngineer).Scan(&userID)
+	// if err != nil {
+	// 	return 0, fmt.Errorf("unable to create user: %w", err)
+	// }
 	var userID int64
-	err := c.Client.QueryRow(ctx, query, data.Email, string(hp), data.IsEngineer).Scan(&userID)
+	err := c.Client.QueryRow(ctx, "INSERT INTO users (email, password, is_engineer) VALUES ($1, $2, $3) RETURNING  id;",
+	data.Email, string(hp), data.IsEngineer).Scan(&userID)
 	if err != nil {
-		return 0, fmt.Errorf("unable to create user: %w", err)
+		return 0, fmt.Errorf("error adding user: %w", err)
 	}
 
 	return int(userID), nil
@@ -63,7 +70,7 @@ func (c *Controller) GetHash(ctx context.Context, email string) (string, error) 
 func (c *Controller) CreateSession(ctx context.Context, email, sessionID string, expAt time.Time) error {
 	// Получение идентификатора пользователя и информации об инженерном статусе пользователя по его email.
 	var userID int
-	err := c.Client.QueryRow(ctx, "SELECT user_id FROM users WHERE email = $1", email).Scan(&userID)
+	err := c.Client.QueryRow(ctx, "SELECT id FROM users WHERE email = $1", email).Scan(&userID)
 	if err != nil {
 		return fmt.Errorf("error getting user info: %w", err)
 	}
@@ -86,7 +93,7 @@ func (c *Controller) IsEngineer(ctx context.Context, sessionID string) (bool, er
 	err := c.Client.QueryRow(ctx, `
         SELECT u.is_engineer
         FROM sessions s
-        JOIN users u ON s.user_id = u.user_id
+        JOIN users u ON s.user_id = u.id
         WHERE s.session_id = $1`, sessionID).Scan(&isEngineer)
 	if err != nil {
 		return false, fmt.Errorf("error cheking rights: %w", err)

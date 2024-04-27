@@ -39,18 +39,20 @@ func (c *MessageController) CreateUserHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	userResponse := model.UserDTO{
-		ID: userID,
-		Email: user.Email,
+		ID:         userID,
+		Email:      user.Email,
 		IsEngineer: user.IsEngineer,
 	}
+
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
 	err = json.NewEncoder(w).Encode(userResponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173, https://eal-frontend.vercel.app")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 }
 
 // LoginHandler обрабатывает запрос на аутентификацию пользователя.
@@ -103,14 +105,16 @@ func (c *MessageController) LoginHandler(w http.ResponseWriter, r *http.Request)
 		Email:      user.Email,
 		IsEngineer: isEngineer,
 	}
+
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
 	err = json.NewEncoder(w).Encode(&userResponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173, https://eal-frontend.vercel.app")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 }
 
 // // RedirectAccordingToRights перенаправляет пользователя в зависимости от его прав.
@@ -144,15 +148,15 @@ func (c *MessageController) GetUnsolved(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173, https://eal-frontend.vercel.app")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
 	err = json.NewEncoder(w).Encode(&messages)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 // GetUnsolvedID возвращает нерешенное сообщение по его идентификатору из базы данных.
@@ -174,14 +178,16 @@ func (c *MessageController) GetUnsolvedID(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173, https://eal-frontend.vercel.app")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
 	err = json.NewEncoder(w).Encode(&message)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
+
 }
 
 // UpdateSolvedID обновляет статус решения сообщения в базе данных по его идентификатору.
@@ -207,15 +213,16 @@ func (c *MessageController) UpdateSolvedID(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173, https://eal-frontend.vercel.app")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(&messageResponse) 
+	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode(&messageResponse)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	w.WriteHeader(http.StatusOK)
 }
 
 // CreateMessage создает новое сообщение в базе данных.
@@ -250,15 +257,16 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173, https://eal-frontend.vercel.app")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
 	err = json.NewEncoder(w).Encode(&messageResponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	w.WriteHeader(http.StatusCreated)
 }
 
 // GetStatusByID возвращает информацию о сообщении по его идентификатору.
@@ -283,10 +291,11 @@ func (c *MessageController) GetStatusByID(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173, https://eal-frontend.vercel.app")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
 	err = json.NewEncoder(w).Encode(&message)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -307,13 +316,12 @@ func (c *MessageController) UserHasAcess(r *http.Request) (bool, error) {
 	return isEngineer, err
 }
 
-
 func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 	}
-	
+
 	sessionCookie, _ := r.Cookie("session_id")
 	sessionID := sessionCookie.Value
 
@@ -327,12 +335,13 @@ func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173, https://eal-frontend.vercel.app")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+
 }

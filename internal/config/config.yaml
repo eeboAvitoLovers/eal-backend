@@ -4,8 +4,8 @@ server:
   read_timeout: 15
   write_timeout: 15
 database:
-  host: 172.21.208.1
+  host: 194.87.234.96
   port: 5432 
   username: eebo
-  password: "E]j4<oZPUimz8–&"
-  database_name: eebo_team
+  password: "eebo"
+  database_name: eebo
