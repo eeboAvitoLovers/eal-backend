@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/rs/cors"
 	"github.com/eeboAvitoLovers/eal-backend/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -37,11 +38,19 @@ func NewApp(ctx context.Context, connString string) *App {
 
 // Start запускает веб-сервер.
 func (a *App) Start(ctx context.Context, c config.Config) error {
+	// Инициализация CORS.
+	cs := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:8081", "https://eal-frontend.vercel.app"},
+		AllowCredentials: true,
+	});
+
+	handler := cs.Handler(a.router)
+
 	// Формирование адреса сервера.
 	addrStr := c.Server.Hostname + ":" + strconv.Itoa(c.Server.Port)
 	server := &http.Server{
 		Addr:    addrStr,
-		Handler: a.router,
+		Handler: handler,
 
 		ReadTimeout:  time.Duration(c.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(c.Server.WriteTimeout) * time.Second,

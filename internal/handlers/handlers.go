@@ -25,8 +25,7 @@ type MessageController struct {
 // Принимает HTTP-запрос и записывает данные о новом пользователе в базу данных.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	
 	var user model.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -62,8 +61,7 @@ func (c *MessageController) CreateUserHandler(w http.ResponseWriter, r *http.Req
 // Принимает HTTP-запрос, аутентифицирует пользователя и создает новую сессию.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	
 
 	var user model.UserLogin
 	err := json.NewDecoder(r.Body).Decode(&user)
@@ -131,8 +129,7 @@ func (c *MessageController) LoginHandler(w http.ResponseWriter, r *http.Request)
 // Принимает HTTP-запрос и возвращает нерешенные сообщения в формате JSON.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) GetUnsolved(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	
 	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -164,8 +161,7 @@ func (c *MessageController) GetUnsolved(w http.ResponseWriter, r *http.Request) 
 // Принимает HTTP-запрос и идентификатор сообщения.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) GetUnsolvedID(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -200,8 +196,7 @@ func (c *MessageController) GetUnsolvedID(w http.ResponseWriter, r *http.Request
 // Принимает HTTP-запрос и идентификатор сообщения.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) UpdateSolvedID(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	
 	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -241,8 +236,7 @@ func (c *MessageController) UpdateSolvedID(w http.ResponseWriter, r *http.Reques
 // Принимает HTTP-запрос и данные нового сообщения.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -296,8 +290,7 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 // TODO заменить мапу
 func (c *MessageController) GetStatusByID(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	
 	m := map[bool]string{
 		true: "solved",
 		false: "accepted",
@@ -355,8 +348,7 @@ func (c *MessageController) UserHasAcess(r *http.Request) (bool, error) {
 }
 
 func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
