@@ -387,3 +387,40 @@ func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+// TODO переделать когда исправим статусы
+func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081, https://eal-frontend.vercel.app")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	_, err := c.UserHasAcess(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	m := map[string]bool{
+		"solved": true,
+		"accepted": false,
+	}
+	
+	status := r.URL.Query().Get("status")
+    offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+    limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	log.Print("status:",status,"offset:", offset,"limit:", limit, m[status])
+
+	statusTF := m[status]
+	tickets, err := c.Controller.GetTicketList(r.Context(), statusTF, offset, limit)
+
+	err = json.NewEncoder(w).Encode(&tickets)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}

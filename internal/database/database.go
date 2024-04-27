@@ -34,7 +34,7 @@ func (c *Controller) CreateUser(ctx context.Context, data model.User, hp []byte)
 	// }
 	var userID int64
 	err := c.Client.QueryRow(ctx, "INSERT INTO users (email, password, is_engineer) VALUES ($1, $2, $3) RETURNING  id;",
-	data.Email, string(hp), data.IsEngineer).Scan(&userID)
+		data.Email, string(hp), data.IsEngineer).Scan(&userID)
 	if err != nil {
 		return 0, fmt.Errorf("error adding user: %w", err)
 	}
@@ -145,7 +145,7 @@ func (c *Controller) GetUnsolvedID(ctx context.Context, messageID int) (model.Me
 	// Запрос к базе данных для получения информации о сообщении по его идентификатору.
 	err := c.Client.QueryRow(ctx, "SELECT id, message, user_id, create_at, update_at, solved FROM messages WHERE id = $1 AND solved=false", messageID).Scan(
 		&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved)
-	
+
 	if err.Error() == "no rows in result set" {
 		return model.MessageDTO{}, fmt.Errorf("no message with provided id")
 	} else if err != nil {
@@ -180,11 +180,11 @@ func (c *Controller) UpdateSolvedID(ctx context.Context, updateAt time.Time, mes
 // Возвращает идентификатор пользователя и ошибку, если сессия не найдена или произошла ошибка.
 func (c *Controller) GetUserIDBySessionID(ctx context.Context, sessionID string) (int, error) {
 	var userID int
-    err := c.Client.QueryRow(ctx, "SELECT user_id FROM sessions WHERE session_id = $1", sessionID).Scan(&userID)
-    if err != nil {
-        return 0, err
-    }
-    return userID, nil
+	err := c.Client.QueryRow(ctx, "SELECT user_id FROM sessions WHERE session_id = $1", sessionID).Scan(&userID)
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
 }
 
 // CreateMessage создает новое сообщение в базе данных.
@@ -197,38 +197,66 @@ func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (
         RETURNING id;
     `
 
-    // Выполняем SQL-запрос и сканируем результаты в переменную messageID.
-    var messageID int64
-    err := c.Client.QueryRow(ctx, query, message.Message, message.UserID, message.CreateAt, message.UpdateAt).
-        Scan(&messageID)
+	// Выполняем SQL-запрос и сканируем результаты в переменную messageID.
+	var messageID int64
+	err := c.Client.QueryRow(ctx, query, message.Message, message.UserID, message.CreateAt, message.UpdateAt).
+		Scan(&messageID)
 	if err != nil {
 		return 0, fmt.Errorf("unable to create message: %w", err)
 	}
 	return int(messageID), nil
-} 
+}
 
 // GetStatusByID возвращает информацию о сообщении по его идентификатору.
 // Принимает контекст и идентификатор сообщения.
 // Возвращает информацию о сообщении и ошибку, если сообщение не найдено или произошла ошибка.
 func (c *Controller) GetStatusByID(ctx context.Context, messageID int) (model.MessageDTO, error) {
-    var message model.MessageDTO
-    err := c.Client.QueryRow(ctx, "SELECT id, message, user_id, create_at, update_at, solved FROM messages WHERE id = $1", messageID).
-        Scan(&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved)
-    if err != nil {
-        return model.MessageDTO{}, err
-    }
-    return message, nil
+	var message model.MessageDTO
+	err := c.Client.QueryRow(ctx, "SELECT id, message, user_id, create_at, update_at, solved FROM messages WHERE id = $1", messageID).
+		Scan(&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved)
+	if err != nil {
+		return model.MessageDTO{}, err
+	}
+	return message, nil
 }
 
 func (c *Controller) GetUserByID(ctx context.Context, userID int) (model.UserDTO, error) {
 	query := `SELECT id, email, is_engineer FROM users WHERE id = $1;`
 
-    // Используем QueryRow для выполнения запроса и сканирования результатов в структуру UserDTO.
-    var user model.UserDTO
-    err := c.Client.QueryRow(ctx, query, userID).Scan(&user.ID, &user.Email, &user.IsEngineer)
-    if err != nil {
-        return model.UserDTO{}, fmt.Errorf("error fetching user: %w", err)
-    }
+	// Используем QueryRow для выполнения запроса и сканирования результатов в структуру UserDTO.
+	var user model.UserDTO
+	err := c.Client.QueryRow(ctx, query, userID).Scan(&user.ID, &user.Email, &user.IsEngineer)
+	if err != nil {
+		return model.UserDTO{}, fmt.Errorf("error fetching user: %w", err)
+	}
 
 	return user, nil
+}
+
+// TODO переделать когда исправим статусы
+func (c *Controller) GetTicketList(ctx context.Context, status bool, offset, limit int) ([]model.MessageResponse, error) {
+	response := make([]model.MessageResponse, 0, limit)
+	rows, err := c.Client.Query(ctx, "SELECT * FROM tickets LIMIT $1 OFFSET $2", limit, offset)
+	if err != nil {
+		return []model.MessageResponse{}, err
+	}
+	defer rows.Close()
+
+	m := map[bool]string{
+		true: "solved",
+		false: "accepted",
+	}
+
+	for rows.Next() {
+		var message model.MessageResponse
+		var status bool
+		err := rows.Scan(&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &status)
+		message.Solved = m[status]
+		if err != nil {
+			return []model.MessageResponse{}, err
+		}
+		response = append(response, message)
+	}
+
+	return response, nil
 }

@@ -111,9 +111,9 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// response 200 OK
 	r.HandleFunc("/ticket/{id}", urlHandler.GetStatusByID).Methods("GET")
 
-	// r.HandleFunc("/ticket/{id}", urlHandler.UpdateStatusByID).Methods("PUT")
+	// r.HandleFunc("/ticket/{id}", urlHandler.UpdateStatusByID).Methods("PUT")	
 
 
 	// Выводит список сообщений с указанным статусом
-	// r.HandleFunc("/ticket/", urlHandler.GetTicketList).Queries("status", "{status}", "offset", "{offset}", "limit", "{limit}")
+	r.HandleFunc("/ticket/", urlHandler.GetTicketList).Queries("status", "{status}", "offset", "{offset}", "limit", "{limit}")
 }
