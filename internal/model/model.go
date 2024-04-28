@@ -97,3 +97,9 @@ type Metric1 struct {
 	Date    []time.Time `json:"date"`
 	Percent []int       `json:"percent"`
 }
+
+type Metric2 struct {
+	Cluster string `json:"cluster"`
+	Topic   string `json:"topic"`
+	Count   int    `json:"count"`
+}

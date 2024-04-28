@@ -189,6 +189,38 @@ func (c *Controller) GetMetric1(ctx context.Context) (model.Metric1, error) {
 	return metric1, nil
 }
 
+func (c *Controller) GetMetric2(ctx context.Context) ([]model.Metric2, error) {
+    rows, err := c.Client.Query(ctx, `
+        SELECT f.cluster, ct.topic, f.count
+        FROM (
+            SELECT cluster, COUNT(*) AS count
+            FROM messages m
+            LEFT JOIN clusters c ON m.id = c.ticket_id
+            GROUP BY cluster
+        ) f
+        LEFT JOIN cluster_types ct ON ct.cluster_number = f.cluster
+    `)
+    if err != nil {
+        return nil, fmt.Errorf("unable to execute query: %w", err)
+    }
+    defer rows.Close()
+
+    // Считывание данных из результата запроса
+    var messageCounts []model.Metric2
+    for rows.Next() {
+        var messageCount model.Metric2
+        if err := rows.Scan(&messageCount.Cluster, &messageCount.Topic, &messageCount.Count); err != nil {
+            return nil, fmt.Errorf("error scanning row: %w", err)
+        }
+        messageCounts = append(messageCounts, messageCount)
+    }
+    if err := rows.Err(); err != nil {
+        return nil, fmt.Errorf("error after iterating over rows: %w", err)
+    }
+
+    return messageCounts, nil
+}
+
 
 func (c *Controller) AnalyticsThisMonth(ctx context.Context) (int, error) {
 	var solvedTicketsCount int

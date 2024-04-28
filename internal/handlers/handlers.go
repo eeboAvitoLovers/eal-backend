@@ -491,10 +491,10 @@ func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
 		PrevMonth int `json:"prev_month"`
 	}
 	type Response struct {
-		AVG     AVGTime       `json:"avg_time"`
-		Closed  ClosedTickets `json:"closed_tickets"`
-		Metric1 model.Metric1 `json:"metric1"`
-		// Metric2 int           `json:"metric2"`
+		AVG     AVGTime         `json:"avg_time"`
+		Closed  ClosedTickets   `json:"closed_tickets"`
+		Metric1 model.Metric1   `json:"metric1"`
+		Metric2 []model.Metric2 `json:"metric2"`
 	}
 	now := time.Hour
 	avg := AVGTime{
@@ -507,10 +507,10 @@ func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	// metric2, err := c.Controller.GetMetric2(r.Context())
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// }
+	metric2, err := c.Controller.GetMetric2(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
 	thisMonth, err := c.Controller.AnalyticsThisMonth(r.Context())
 	if err != nil {
@@ -526,7 +526,7 @@ func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
 		AVG:     avg,
 		Closed:  closed,
 		Metric1: metric1,
-		// Metric2: metric2,
+		Metric2: metric2,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(avgTime)
