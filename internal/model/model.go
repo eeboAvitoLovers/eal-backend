@@ -65,10 +65,10 @@ type UserLogin struct {
 
 type GetTicketListStruct struct {
 	Messages []MessageValidDTO `json:"messages"`
-	Total    int          `json:"total"`
+	Total    int               `json:"total"`
 }
 
-func Validate(message MessageDTO) (MessageValidDTO) {
+func Validate(message MessageDTO) MessageValidDTO {
 	var res MessageValidDTO
 	res.ID = message.ID
 	res.Message = message.Message
@@ -91,4 +91,9 @@ func Validate(message MessageDTO) (MessageValidDTO) {
 		res.ResolverID = 0
 	}
 	return res
+}
+
+type Metric1 struct {
+	Date    []time.Time `json:"date"`
+	Percent []int       `json:"percent"`
 }

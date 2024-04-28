@@ -477,7 +477,7 @@ func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	
+
 	type AVGTime struct {
 		AiP time.Duration `json:"accepted_in_progress"`
 		AS  time.Duration `json:"accepted_solved"`
@@ -488,24 +488,30 @@ func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
 		PrevMonth int `json:"prev_month"`
 	}
 	type Response struct {
-		AVG    AVGTime       `json:"avg_time"`
-		Closed ClosedTickets `json:"closed_tickets"`
+		AVG     AVGTime       `json:"avg_time"`
+		Closed  ClosedTickets `json:"closed_tickets"`
+		Metrics model.Metric1 `json:"metrics"`
 	}
-
 	now := time.Hour
 	avg := AVGTime{
 		AiP: now,
-		AS: now,
+		AS:  now,
+	}
+
+	metrics, err := c.Controller.GetMetric1(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	closed := ClosedTickets{
-		Total: 57,
+		Total:     57,
 		ThisMonth: 89,
 		PrevMonth: 97,
 	}
 	avgTime := Response{
-		AVG: avg,
+		AVG:    avg,
 		Closed: closed,
+		Metrics: metrics,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(avgTime)

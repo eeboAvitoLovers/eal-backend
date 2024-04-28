@@ -4,6 +4,8 @@ import (
 	// "bytes"
 	"context"
 	"database/sql"
+	"time"
+
 	// "encoding/json"
 	"fmt"
 	// "net/http"
@@ -142,3 +144,47 @@ func (c *Controller) GetNewTicket(ctx context.Context, newTicketID int) (model.M
 
 // 	return clusterID, nil
 // }
+
+func (c *Controller) GetMetric1(ctx context.Context) (model.Metric1, error) {
+	conn, err := c.Client.Acquire(ctx)
+	if err != nil {
+		return model.Metric1{}, fmt.Errorf("unable to acquire connect: %w", err)
+	}
+	defer conn.Release()
+
+	query := `
+		SELECT create_at::date create_at,
+			round(count(*) FILTER (WHERE solved = 'in_queue') * 100.0 / count(*))::int AS percent_of_reject 
+		FROM messages
+		GROUP BY create_at::date
+		ORDER BY create_at
+	`
+
+	rows, err := conn.Query(ctx, query)
+	if err != nil {
+		return model.Metric1{}, fmt.Errorf("unable to query db: %w", err)
+	}
+	defer rows.Close()
+	var metric1 model.Metric1
+	var dates []time.Time
+	var percents []int
+
+	for rows.Next(){
+		var date time.Time
+		var percent int
+
+		if err := rows.Scan(&date, &percent); err != nil {
+			return model.Metric1{}, fmt.Errorf("unable to scan: %w", err)
+		}
+		dates = append(dates, date)
+		percents = append(percents, percent)
+	}
+
+	if err := rows.Err(); err != nil {
+		return model.Metric1{}, fmt.Errorf("error while quering: %w", err)
+	}
+
+	metric1.Date = dates
+	metric1.Percent = percents
+	return metric1, nil
+}
