@@ -318,7 +318,8 @@ func (c *MessageController) LogoutHandler(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	sessionCookie.Expires = time.Now().AddDate(0, 0, -1)
+	http.SetCookie(w, sessionCookie)
 }
 
 func (c *MessageController) GetUnsolvedTicket(w http.ResponseWriter, r *http.Request) {
