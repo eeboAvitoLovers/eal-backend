@@ -69,7 +69,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// Выводит список сообщений с указанным статусом
 	r.HandleFunc("/ticket/", urlHandler.GetTicketList).Queries("status", "{status}", "offset", "{offset}", "limit", "{limit}").Methods("GET")
 	// Присваивает тикет инженеру
-	r.HandleFunc("/specialist/{id}/tickets", urlHandler.GetUnsolvedTicket).Methods("POST")
+	r.HandleFunc("/specialist/{id}/tickets/", urlHandler.GetUnsolvedTicket).Methods("POST")
 	// Выводит список тикетов принадлежащих инженеру
 	r.HandleFunc("/specialist/{id}/tickets", urlHandler.GetMyTickets).Queries("offset", "{offset}", "limit", "{limit}").Methods("GET")
 

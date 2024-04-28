@@ -320,30 +320,28 @@ func (c *MessageController) LogoutHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (c *MessageController) GetUnsolvedTicket(w http.ResponseWriter, r *http.Request) {
-	_, err := c.UserHasAcess(r)
+	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+	if !isEngineer {
+		http.Error(w, "no rights", http.StatusForbidden)
+	}
 
-	var requestBody map[string]interface{}
+	type requestBody struct {
+		TicketID int `json:"ticket_id"`
+	}
 
-	err = json.NewDecoder(r.Body).Decode(&requestBody)
+	var ticket requestBody
+
+	err = json.NewDecoder(r.Body).Decode(&ticket)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	ticketIDStr, ok := requestBody["number"].(string)
-	if !ok {
-		http.Error(w, "invalid number format", http.StatusBadRequest)
-		return
-	}
 
-	ticketID, err := strconv.Atoi(ticketIDStr)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	ticketID := ticket.TicketID
 
 	vars := mux.Vars(r)
 	resolverID, err := strconv.Atoi(vars["id"])
@@ -375,14 +373,12 @@ func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http
 		return
 	}
 
-	type status struct {
-		Status string `json:"status"`
-	}
-	
-	var statusStr status
-	err = json.NewDecoder(r.Body).Decode(&statusStr)
+	sessionCookie, _ := r.Cookie("session_id")
+	sessionID := sessionCookie.Value
+
+	userID, err := c.Controller.GetUserIDBySessionID(r.Context(), sessionID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -392,16 +388,33 @@ func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	sessionCookie, _ := r.Cookie("session_id")
-	sessionID := sessionCookie.Value
 
-	userID, err := c.Controller.GetUserIDBySessionID(r.Context(), sessionID)
+	resolverID, err := c.Controller.GetResolverIDByTicketID(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	if resolverID != userID {
+		http.Error(w, "resolverID != userID", http.StatusForbidden)
+		return
+	}
+
+	type statusResult struct {
+		Status string `json:"status"`
+		Result string `json:"result,omitempty"`
+	}
+
+	var statusStr statusResult
+	err = json.NewDecoder(r.Body).Decode(&statusStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	
 	log.Print("change ticket status", "id", id, "userID", userID, "status", statusStr)
-	message, err := c.Controller.UpdateStatusInProgress(r.Context(), id, userID, statusStr.Status)
+	message, err := c.Controller.UpdateStatusInProgress(r.Context(), id, userID, statusStr.Status, statusStr.Result)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

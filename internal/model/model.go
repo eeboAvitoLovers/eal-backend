@@ -18,13 +18,14 @@ type Message struct {
 // Включает в себя идентификатор сообщения, текст сообщения, идентификатор пользователя,
 // время создания, время обновления и флаг решения сообщения.
 type MessageDTO struct {
-	ID         int       `json:"id,omitempty"`
-	Message    string    `json:"message"`
-	UserID     int       `json:"user_id"`
-	CreateAt   time.Time `json:"create_at"`
-	UpdateAt   time.Time `json:"update_at"`
-	Solved     string    `json:"solved,omitempty"`
-	ResolverID int       `json:"resolver_id"`
+	ID         int       `db:"id" json:"id"`
+	UserID     int       `db:"user_id" json:"user_id"`
+	UpdateAt   time.Time `db:"update_at" json:"update_at"`
+	CreateAt   time.Time `db:"create_at" json:"create_at"`
+	Message    string    `db:"message" json:"message"`
+	Solved     string    `db:"solved" json:"solved"`
+	Result     *string    `db:"result" json:"result"`
+	ResolverID int       `db:"resolver_id" json:"resolver_id"`
 }
 
 // User представляет модель пользователя с полями для электронной почты, пароля и флага инженера.
@@ -46,22 +47,7 @@ type UserLogin struct {
 	Password string `json:"password"`
 }
 
-type MessageResponse struct {
-	ID       int       `json:"id"`
-	Message  string    `json:"message"`
-	UserID   int       `json:"user_id"`
-	CreateAt time.Time `json:"create_at"`
-	UpdateAt time.Time `json:"update_at"`
-	Solved   string    `json:"solved"`
-}
-
 type GetTicketListStruct struct {
 	Messages []MessageDTO `json:"messages"`
 	Total    int          `json:"total"`
-}
-
-type AvgTime struct {
-	AcceptedInProgress time.Time `json:"accepted_in_progress"`
-	AcceptedSolved     time.Time `json:"accepted_solved"`
-	InProgressSolved   time.Time `json:"in_progress_solved"`
 }
