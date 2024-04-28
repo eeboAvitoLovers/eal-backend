@@ -52,17 +52,17 @@ func (c *Controller) GetResolverIDByTicketID(ctx context.Context, ticketID int) 
 	var resolverID sql.NullInt64
 
 	row := c.Client.QueryRow(ctx, query, ticketID)
-    err := row.Scan(&resolverID)
+	err := row.Scan(&resolverID)
 	if !resolverID.Valid {
 		return 0, fmt.Errorf("resolverID is null")
 	}
-    if err != nil {
-        if err.Error() == "no rows in result set" {
-            return 0, fmt.Errorf("no message found with ID: %w", err)
-        } else {
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return 0, fmt.Errorf("no message found with ID: %w", err)
+		} else {
 			return 0, fmt.Errorf("unable to get resolverID: %w", err)
-        }
-    }
+		}
+	}
 
 	return int(resolverID.Int64), nil
 }
@@ -154,7 +154,7 @@ func (c *Controller) GetMetric1(ctx context.Context) (model.Metric1, error) {
 
 	query := `
 		SELECT create_at::date create_at,
-			round(count(*) FILTER (WHERE solved = 'in_queue') * 100.0 / count(*))::int AS percent_of_reject 
+			round(count(*) FILTER (WHERE solved = 'rejected') * 100.0 / count(*))::int AS percent_of_reject 
 		FROM messages
 		GROUP BY create_at::date
 		ORDER BY create_at
@@ -169,7 +169,7 @@ func (c *Controller) GetMetric1(ctx context.Context) (model.Metric1, error) {
 	var dates []time.Time
 	var percents []int
 
-	for rows.Next(){
+	for rows.Next() {
 		var date time.Time
 		var percent int
 
@@ -187,4 +187,64 @@ func (c *Controller) GetMetric1(ctx context.Context) (model.Metric1, error) {
 	metric1.Date = dates
 	metric1.Percent = percents
 	return metric1, nil
+}
+
+func (c *Controller) GetMetric2(ctx context.Context) (int, error) {
+	conn, err := c.Client.Acquire(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("unable to acquire connect: %w", err)
+	}
+	defer conn.Release()
+
+	query := `
+	select round(avg(minutes_diff)) 
+    from (select id, cast(EXTRACT(EPOCH FROM max(update_at)-min(update_at)) as int) AS minutes_diff
+            from messages
+           group by id) cte
+	`
+
+	// Выполнение запроса и получение результата
+	var avgMinutesDiff int
+	err = c.Client.QueryRow(ctx, query).Scan(&avgMinutesDiff)
+	if err != nil {
+		return 0, fmt.Errorf("unable to get metric2")
+	}
+	return avgMinutesDiff, nil
+}
+
+func (c *Controller) AnalyticsThisMonth(ctx context.Context) (int, error) {
+	var solvedTicketsCount int
+	err := c.Client.QueryRow(context.Background(), `
+        SELECT COUNT(*) AS solved_tickets_count
+        FROM (
+            SELECT id
+            FROM public.messages
+            WHERE solved = 'solved' AND (solved, update_at) IN (
+                SELECT 'solved', MAX(update_at)
+                FROM public.messages
+                WHERE solved = 'solved'
+                  AND EXTRACT(YEAR FROM update_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+                  AND EXTRACT(MONTH FROM update_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+                GROUP BY id
+            )
+        ) AS subquery
+        JOIN (
+            SELECT id
+            FROM public.messages
+            WHERE solved = 'in_queue' AND (solved, update_at) IN (
+                SELECT 'in_queue', MAX(update_at)
+                FROM public.messages
+                WHERE solved = 'in_queue'
+                  AND EXTRACT(YEAR FROM update_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+                  AND EXTRACT(MONTH FROM update_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+                GROUP BY id
+            )
+        ) AS subquery2
+        ON subquery.id = subquery2.id;
+    `).Scan(&solvedTicketsCount)
+	if err != nil {
+		return 0, err
+	}
+	return solvedTicketsCount, nil
+
 }

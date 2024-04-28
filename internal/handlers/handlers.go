@@ -490,7 +490,8 @@ func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
 	type Response struct {
 		AVG     AVGTime       `json:"avg_time"`
 		Closed  ClosedTickets `json:"closed_tickets"`
-		Metrics model.Metric1 `json:"metrics"`
+		Metric1 model.Metric1 `json:"metric1"`
+		Metric2 int           `json:"metric2"`
 	}
 	now := time.Hour
 	avg := AVGTime{
@@ -498,20 +499,31 @@ func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
 		AS:  now,
 	}
 
-	metrics, err := c.Controller.GetMetric1(r.Context())
+	metric1, err := c.Controller.GetMetric1(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	metric2, err := c.Controller.GetMetric2(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	thisMonth, err := c.Controller.AnalyticsThisMonth(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	closed := ClosedTickets{
 		Total:     57,
-		ThisMonth: 89,
+		ThisMonth: thisMonth,
 		PrevMonth: 97,
 	}
 	avgTime := Response{
-		AVG:    avg,
-		Closed: closed,
-		Metrics: metrics,
+		AVG:     avg,
+		Closed:  closed,
+		Metric1: metric1,
+		Metric2: metric2,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(avgTime)
