@@ -25,14 +25,14 @@ type Controller struct {
 // Принимает контекст и данные нового пользователя.
 // Возвращает ошибку, если создание не удалось.
 func (c *Controller) CreateUser(ctx context.Context, data model.User, hp []byte) (int, error) {
-	var userID int64
+	var userID int
 	err := c.Client.QueryRow(ctx, "INSERT INTO users (email, password, is_engineer) VALUES ($1, $2, $3) RETURNING  id;",
 		data.Email, string(hp), data.IsEngineer).Scan(&userID)
 	if err != nil {
 		return 0, fmt.Errorf("error adding user: %w", err)
 	}
 
-	return int(userID), nil
+	return userID, nil
 }
 
 // GetHash возвращает хешированный пароль пользователя по его email.

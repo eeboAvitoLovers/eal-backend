@@ -239,7 +239,6 @@ func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
-		
 	}
 
 	sessionCookie, _ := r.Cookie("session_id")
