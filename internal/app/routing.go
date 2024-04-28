@@ -77,5 +77,5 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// works
 	r.HandleFunc("/specialist/{id}/tickets", urlHandler.GetMyTickets).Queries("offset", "{offset}", "limit", "{limit}").Methods("GET")
 	// TODO
-	r.HandleFunc("/tickets/analytics/", urlHandler.Analytics).Methods("GET")
+	// r.HandleFunc("/tickets/analytics/", urlHandler.Analytics).Methods("GET")
 }

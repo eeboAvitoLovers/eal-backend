@@ -25,7 +25,7 @@ type MessageController struct {
 // Принимает HTTP-запрос и записывает данные о новом пользователе в базу данных.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	
+
 	var user model.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -65,7 +65,6 @@ func (c *MessageController) CreateUserHandler(w http.ResponseWriter, r *http.Req
 // Принимает HTTP-запрос, аутентифицирует пользователя и создает новую сессию.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	
 
 	var user model.UserLogin
 	err := json.NewDecoder(r.Body).Decode(&user)
@@ -133,7 +132,7 @@ func (c *MessageController) LoginHandler(w http.ResponseWriter, r *http.Request)
 // Принимает HTTP-запрос и данные нового сообщения.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request) {
-	
+
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -148,10 +147,10 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 	}
 
 	message, ok := requestBody["message"].(string)
-    if !ok {
-        http.Error(w, "invalid JSON structure: message field is missing or not a string", http.StatusBadRequest)
-        return
-    }
+	if !ok {
+		http.Error(w, "invalid JSON structure: message field is missing or not a string", http.StatusBadRequest)
+		return
+	}
 
 	sessionCookie, _ := r.Cookie("session_id")
 	sessionID := sessionCookie.Value
@@ -160,15 +159,13 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	messageData := model.Message{
-		Message:  message,
-		UserID:   userID,
-		CreateAt: time.Now().Format("2006-01-02 15:04:05"),
-		UpdateAt: time.Now().Format("2006-01-02 15:04:05"),
-		Solved: "in_queue",
+		Message:    message,
+		UserID:     userID,
+		CreateAt:   time.Now().Format("2006-01-02 15:04:05"),
+		UpdateAt:   time.Now().Format("2006-01-02 15:04:05"),
+		Solved:     "in_queue",
 		ResolverID: 0,
 	}
-
-
 
 	messageID, err := c.Controller.CreateMessage(r.Context(), messageData)
 	if err != nil {
@@ -237,7 +234,7 @@ func (c *MessageController) UserHasAcess(r *http.Request) (bool, error) {
 }
 
 func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
-	
+
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -269,7 +266,6 @@ func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-
 func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request) {
 	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
@@ -280,14 +276,14 @@ func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request
 		http.Error(w, "no rights", http.StatusForbidden)
 		return
 	}
-	
+
 	status := r.URL.Query().Get("status")
-    offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-    limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -366,6 +362,7 @@ func (c *MessageController) GetUnsolvedTicket(w http.ResponseWriter, r *http.Req
 }
 
 func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -415,7 +412,6 @@ func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http
 		return
 	}
 
-	
 	log.Print("change ticket status", "id", id, "userID", userID, "status", statusStr)
 	message, err := c.Controller.UpdateStatusInProgress(r.Context(), id, userID, statusStr.Status, statusStr.Result)
 	if err != nil {
@@ -441,13 +437,13 @@ func (c *MessageController) GetMyTickets(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "no rigths", http.StatusForbidden)
 		return
 	}
-	
+
 	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-    limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -475,6 +471,27 @@ func (c *MessageController) GetMyTickets(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
-	
-}
+// func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
+// 	type AVGTime struct {
+// 		AiP time.Duration `json:"accepted_in_progress"`
+// 		AS  time.Duration `json:"accepted_solved"`
+// 	}
+// 	type ClosedTickets struct {
+// 		Total     int `json:"total"`
+// 		ThisMonth int `json:"this_month"`
+// 		PrevMonth int `json:"prev_month"`
+// 	}
+// 	type Response struct {
+// 		AVG    AVGTime       `json:"avg_time"`
+// 		Closed ClosedTickets `json:"closed_tickets"`
+// 	}
+
+// 	now := time.Now()
+// 	yesterday := now.Sub(24 * time.Hour)
+// 	time
+// 	var avg AVGTime
+// 	avg = AVGTime{
+// 		AiP: yesterday,
+// 	}
+
+// }
