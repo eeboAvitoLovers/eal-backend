@@ -189,30 +189,6 @@ func (c *Controller) GetMetric1(ctx context.Context) (model.Metric1, error) {
 	return metric1, nil
 }
 
-func (c *Controller) GetMetric2(ctx context.Context) (int, error) {
-	conn, err := c.Client.Acquire(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("unable to acquire connect: %w", err)
-	}
-	defer conn.Release()
-
-	query := `
-		select create_at::date create_at,
-		round(count(*) filter (where solved::text = 'rejected')*100.0 /
-			count(*))::int as percent_of_reject 
-	from messages
-	group by create_at::date
-	order by create_at
-	`
-
-	// Выполнение запроса и получение результата
-	var avgMinutesDiff int
-	err = c.Client.QueryRow(ctx, query).Scan(&avgMinutesDiff)
-	if err != nil {
-		return 0, fmt.Errorf("unable to get metric2")
-	}
-	return avgMinutesDiff, nil
-}
 
 func (c *Controller) AnalyticsThisMonth(ctx context.Context) (int, error) {
 	var solvedTicketsCount int
