@@ -362,7 +362,7 @@ func (c *MessageController) GetUnsolvedTicket(w http.ResponseWriter, r *http.Req
 }
 
 func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
