@@ -46,17 +46,17 @@
 
 ## Эндпоинты 
 
-`GET /me` Отправляет данные о юзере.
-`POST /register` Регистрирует юзера.
-`POST /login` Вход в аккаунт, записывает куки и создает сессию.
-`GET /logout` Выход из аккаунта, удаляет куки.
-`POST /ticket/` Создание нового обращения.
-`GET /ticket/{id}` Получение информации об обращении с переданным id.
-`PUT /ticket/{id}` Обновляет статус и результат обращения.
-`GET /tickets?status={status}&offset={offset}&limit={limit}` Выводит список обращений с заданным состоянием.
-`POST /specialist/{id}/tickets` Присваивает обращение инженеру.
-`GET /specialist/{id}/tickets?offset={offest}&limit={limit}` Показывает список тикетов принадлежащих специалисту.
-`GET /tickets/analytics` Возвращает аналитику по обращениям.
+* `GET /me` Отправляет данные о юзере.
+* `POST /register` Регистрирует юзера.
+* `POST /login` Вход в аккаунт, записывает куки и создает сессию.
+* `GET /logout` Выход из аккаунта, удаляет куки.
+* `POST /ticket/` Создание нового обращения.
+* `GET /ticket/{id}` Получение информации об обращении с переданным id.
+* `PUT /ticket/{id}` Обновляет статус и результат обращения.
+* `GET /tickets?status={status}&offset={offset}&limit={limit}` Выводит список обращений с заданным состоянием.
+* `POST /specialist/{id}/tickets` Присваивает обращение инженеру.
+* `GET /specialist/{id}/tickets?offset={offest}&limit={limit}` Показывает список тикетов принадлежащих специалисту.
+* `GET /tickets/analytics` Возвращает аналитику по обращениям.
 
 
 ## TODO:
