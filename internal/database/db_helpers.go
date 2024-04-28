@@ -1,16 +1,16 @@
 package database
 
 import (
-	"bytes"
+	// "bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
-	"net/http"
-	"strconv"
+	// "net/http"
+	// "strconv"
 
 	"github.com/eeboAvitoLovers/eal-backend/internal/model"
-	"github.com/eeboAvitoLovers/eal-backend/internal/config"
+	// "github.com/eeboAvitoLovers/eal-backend/internal/config"
 )
 
 const configFilename = "./internal/config/config.yaml"
@@ -85,7 +85,7 @@ func (c *Controller) GetTicketByID(ctx context.Context, ticketID int) (model.Mes
 	return message, nil
 }
 
-func (c *Controller) GetNewTicket(ctx context.Context, newTicketID int) (model.MessageDTO, error) {
+func (c *Controller) GetNewTicket(ctx context.Context, newTicketID int) (model.MessageValidDTO, error) {
 	query := `
 		SELECT id, message, user_id, create_at, update_at, solved, resolver_id, result
 		FROM messages
@@ -93,51 +93,52 @@ func (c *Controller) GetNewTicket(ctx context.Context, newTicketID int) (model.M
 	`
 	var message model.MessageDTO
 	err := c.Client.QueryRow(ctx, query, newTicketID).Scan(
-		&message.ID, &message.UserID, &message.UpdateAt, &message.CreateAt, &message.Message, &message.Solved, &message.Result, &message.ResolverID)
+		&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved, &message.ResolverID, &message.Result)
 	if err != nil {
-		return model.MessageDTO{}, err
+		return model.MessageValidDTO{}, err
 	}
-	return message, nil
+	res := model.Validate(message)
+	return res, nil
 }
 
-func (c *Controller) GiveClusterID(ctx context.Context, newTicketID int, message string) (int, error) {
-	data := map[string]interface{}{
-		"message": message,
-	}
+// func (c *Controller) GiveClusterID(ctx context.Context, newTicketID int, message string) (int, error) {
+// 	data := map[string]interface{}{
+// 		"message": message,
+// 	}
 
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return 0, fmt.Errorf("unable to send request: %w", err)
-	}
+// 	jsonData, err := json.Marshal(data)
+// 	if err != nil {
+// 		return 0, fmt.Errorf("unable to send request: %w", err)
+// 	}
 
-	reqBody := bytes.NewBuffer(jsonData)
+// 	reqBody := bytes.NewBuffer(jsonData)
 
-	config, err := config.LoadConfig(configFilename)
-	if err != nil {
-		return 0, fmt.Errorf("unable to load config: %w", err)
-	}
+// 	config, err := config.LoadConfig(configFilename)
+// 	if err != nil {
+// 		return 0, fmt.Errorf("unable to load config: %w", err)
+// 	}
 
-	resp, err := http.Post(fmt.Sprintf("%s:%d", config.Clusters.Hostname, config.Clusters.Port), "application/json", reqBody)
-	if err != nil {
-		return 0, fmt.Errorf("unable to send post request: %w", err)
-	}
+// 	resp, err := http.Post(fmt.Sprintf("%s:%d", config.Clusters.Hostname, config.Clusters.Port), "application/json", reqBody)
+// 	if err != nil {
+// 		return 0, fmt.Errorf("unable to send post request: %w", err)
+// 	}
 
-	type RespStruct struct {
-		Message string `json:"message"`
-		Cluster string `json:"cluster"`
-	}
+// 	type RespStruct struct {
+// 		Message string `json:"message"`
+// 		Cluster string `json:"cluster"`
+// 	}
 
-	var r RespStruct
+// 	var r RespStruct
 
-	err = json.NewDecoder(resp.Body).Decode(&r)
-	if err != nil {
-		return 0, fmt.Errorf("unable to decode response: %w", err)
-	}
+// 	err = json.NewDecoder(resp.Body).Decode(&r)
+// 	if err != nil {
+// 		return 0, fmt.Errorf("unable to decode response: %w", err)
+// 	}
 
-	clusterID, err := strconv.Atoi(r.Cluster)
-	if err != nil {
-		return 0, fmt.Errorf("unable to convert clusterID: %w", err)
-	}
+// 	clusterID, err := strconv.Atoi(r.Cluster)
+// 	if err != nil {
+// 		return 0, fmt.Errorf("unable to convert clusterID: %w", err)
+// 	}
 
-	return clusterID, nil
-}
+// 	return clusterID, nil
+// }

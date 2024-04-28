@@ -139,10 +139,10 @@ func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (
 		return 0, fmt.Errorf("unable to get new id: %w", err)
 	}
 
-	clusterID, err := c.GiveClusterID(ctx, messageID, message.Message)
-	if err != nil {
-		return 0, fmt.Errorf("cannot get clusterID: %w", err)
-	}
+	// clusterID, err := c.GiveClusterID(ctx, messageID, message.Message)
+	// if err != nil {
+	// 	return 0, fmt.Errorf("cannot get clusterID: %w", err)
+	// }
 
 	query := `
         INSERT INTO messages (id, message, user_id, create_at, update_at, solved)
@@ -155,34 +155,41 @@ func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (
 		return 0, fmt.Errorf("unable to create message: %w", err)
 	}
 
-	query = `
-		INSERT INTO clusters (ticket_id, cluster) 
-		VALUES ($1, $2)
-	`
-	_, err = c.Client.Exec(ctx, query, messageID, clusterID)
-	if err != nil {
-		return 0, fmt.Errorf("unable to insert into clusters: %w", err)
-	}
+	// query = `
+	// 	INSERT INTO clusters (ticket_id, cluster) 
+	// 	VALUES ($1, $2)
+	// `
+	// _, err = c.Client.Exec(ctx, query, messageID, clusterID)
+	// if err != nil {
+	// 	return 0, fmt.Errorf("unable to insert into clusters: %w", err)
+	// }
 	return int(messageID), nil
 }
 
 // GetStatusByID возвращает информацию о сообщении по его идентификатору.
 // Принимает контекст и идентификатор сообщения.
 // Возвращает информацию о сообщении и ошибку, если сообщение не найдено или произошла ошибка.
-func (c *Controller) GetStatusByID(ctx context.Context, messageID int) (model.MessageDTO, error) {
+func (c *Controller) GetStatusByID(ctx context.Context, messageID int) (model.MessageValidDTO, error) {
 	var message model.MessageDTO
 	var resolverID sql.NullInt64
-	err := c.Client.QueryRow(ctx, "SELECT id, message, user_id, create_at, update_at, solved, resolver_id, work_start_date FROM messages WHERE id = $1", messageID).
-		Scan(&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved, &resolverID)
+	query := `
+	SELECT id, user_id, update_at, create_at, message, solved, result, resolver_id
+	FROM (
+		SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY update_at DESC) AS rn
+		FROM messages
+		WHERE id = $1
+	) AS CTE
+	WHERE rn = 1
+	`
+	err := c.Client.QueryRow(ctx, query, messageID).
+    Scan(&message.ID, &message.UserID, &message.UpdateAt, &message.CreateAt, &message.Message, &message.Solved, &message.Result, &resolverID)
+
+	valid := model.Validate(message)
+
 	if err != nil {
-		return model.MessageDTO{}, err
+		return model.MessageValidDTO{}, err
 	}
-	if resolverID.Valid {
-		message.ResolverID = int(resolverID.Int64)
-	} else {
-		message.ResolverID = 0
-	}
-	return message, nil
+	return valid, nil
 }
 
 func (c *Controller) GetUserByID(ctx context.Context, userID int) (model.UserDTO, error) {
@@ -209,25 +216,20 @@ func (c *Controller) GetTicketList(ctx context.Context, status string, offset, l
 		WHERE rn = 1
 		LIMIT $2 OFFSET $3
 	`
-	var messages []model.MessageDTO
+	var messages []model.MessageValidDTO
 	rows, err := c.Client.Query(context.Background(), query, status, limit, offset)
 	if err != nil {
 		return model.GetTicketListStruct{}, err
 	}
 	defer rows.Close()
 
-	var resolverID sql.NullInt64
 	for rows.Next() {
 		var message model.MessageDTO
-		if err := rows.Scan(&message.ID, &message.UserID, &message.UpdateAt, &message.CreateAt, &message.Message, &message.Solved, &message.Result, &resolverID); err != nil {
+		if err := rows.Scan(&message.ID, &message.UserID, &message.UpdateAt, &message.CreateAt, &message.Message, &message.Solved, &message.Result, &message.ResolverID); err != nil {
 			return model.GetTicketListStruct{}, err
 		}
-		if resolverID.Valid {
-			message.ResolverID = int(resolverID.Int64)
-		} else {
-			message.ResolverID = 0
-		}
-		messages = append(messages, message)
+		
+		messages = append(messages, model.Validate(message))
 	}
 	if err := rows.Err(); err != nil {
 		return model.GetTicketListStruct{}, err
@@ -323,97 +325,94 @@ func (c *Controller) UpdateStatusInProgress(ctx context.Context, ticketID, resol
 }
 
 
-func (c *Controller) GetUnsolvedTicket(ctx context.Context, ticketID, resolverID int) (model.MessageDTO, error) {
+func (c *Controller) GetUnsolvedTicket(ctx context.Context, ticketID, resolverID int) (model.MessageValidDTO, error) {
 	status := "in_progress"
 	updateAt := time.Now().Format("2006-01-02 15:04:05")
 	var resolver sql.NullInt64
 	err := c.Client.QueryRow(ctx, "SELECT resolver_id FROM messages WHERE id=$1", ticketID).Scan(&resolver)
 	if err != nil {
-		return model.MessageDTO{}, err
+		return model.MessageValidDTO{}, err
 	}
 	newTicketID, err := c.GetNewID(ctx)
 	if err != nil {
-		return model.MessageDTO{}, err
+		return model.MessageValidDTO{}, err
 	}
 
 	oldMessage, err := c.GetTicketByID(ctx, ticketID)
 	if err != nil {
-		return model.MessageDTO{}, err
+		return model.MessageValidDTO{}, err
 	}
 
+	log.Print(status)
 	if !resolver.Valid {
 		_, err = c.Client.Exec(ctx, `
         INSERT INTO messages (id, message, user_id, create_at, update_at, solved, resolver_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7);
-    `, newTicketID, oldMessage.Message, oldMessage.CreateAt, updateAt, status, resolverID)
+    `, newTicketID, oldMessage.Message, oldMessage.UserID,oldMessage.CreateAt, updateAt, status, resolverID)
 		if err != nil {
-			return model.MessageDTO{}, fmt.Errorf("unable to update status: %w", err)
+			return model.MessageValidDTO{}, fmt.Errorf("unable to update status: %w", err)
 		}
 	}
 
-	ticket, err := c.GetNewTicket(ctx, ticketID)
+	ticket, err := c.GetTicketByID(ctx, newTicketID)
 	if err != nil {
-		return model.MessageDTO{}, fmt.Errorf("unable to get ticket: %w", err)
+		return model.MessageValidDTO{}, fmt.Errorf("unable to get ticket: %w", err)
 	}
+	res := model.Validate(ticket)
 
-	return ticket, nil
+
+	return res, nil
 }
 
 func (c *Controller) GetMyTickets(ctx context.Context, limit, offset, userID int) (model.GetTicketListStruct, error) {
-	messages := make([]model.MessageDTO, 0, limit)
-	query := `
-		SELECT COUNT(id)
-		FROM (
-			SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY update_at DESC) AS rn
-			FROM messages
-			WHERE resolver_id = $1
-		) AS CTE
-		WHERE rn = 1
-		LIMIT = $2 OFFSET = $3
-	`
-	rows, err := c.Client.Query(ctx, "SELECT * FROM messages WHERE resolver_id=$1 LIMIT $2 OFFSET $3", userID, limit, offset)
-	if err != nil {
-		return model.GetTicketListStruct{}, err
-	}
-	defer rows.Close()
-	var resolverID sql.NullInt64
-	for rows.Next() {
-		var message model.MessageDTO
-		err := rows.Scan(&message.ID, &message.Message, &message.UserID, &message.CreateAt, &message.UpdateAt, &message.Solved, &resolverID)
-		if err != nil {
-			return model.GetTicketListStruct{}, err
-		}
-		message.ResolverID = int(resolverID.Int64)
-		messages = append(messages, message)
-	}
+    messages := make([]model.MessageValidDTO, 0, limit)
+    
+    // SQL query to retrieve ticket data
+    query := `
+        SELECT id, user_id, update_at, create_at, message, solved, result, resolver_id
+        FROM messages
+        WHERE resolver_id = $1
+        ORDER BY update_at DESC
+        LIMIT $2 OFFSET $3;
+    `
+    
+    rows, err := c.Client.Query(ctx, query, userID, limit, offset)
+    if err != nil {
+        return model.GetTicketListStruct{}, err
+    }
+    defer rows.Close()
+	
+    for rows.Next() {
+        var message model.MessageDTO
+        err := rows.Scan(&message.ID, &message.UserID, &message.UpdateAt, &message.CreateAt, &message.Message, &message.Solved, &message.Result, &message.ResolverID)
+        if err != nil {
+            return model.GetTicketListStruct{}, err
+        }
+		log.Print("db mytickets func", model.Validate(message))
+        messages = append(messages, model.Validate(message))
+    }
 
-	var cnt int
-	query = `
-		SELECT COUNT(id)
-		FROM (
-			SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY update_at DESC) AS rn
-			FROM messages
-			WHERE resolver_id = $1
-		) AS CTE
-		WHERE rn = 1
-	`
-	conn, err := c.Client.Acquire(ctx)
-	if err != nil {
-		return model.GetTicketListStruct{}, err
-	}
-	defer conn.Release()
+    var cnt int
+    // SQL query to count total number of tickets
+    countQuery := `
+        SELECT COUNT(id)
+        FROM messages
+        WHERE resolver_id = $1;
+    `
+    conn, err := c.Client.Acquire(ctx)
+    if err != nil {
+        return model.GetTicketListStruct{}, err
+    }
+    defer conn.Release()
 
-	row := conn.QueryRow(ctx, query, userID)
-	err = row.Scan(&cnt)
-	if err != nil {
-		return model.GetTicketListStruct{}, err
-	}
+    row := conn.QueryRow(ctx, countQuery, userID)
+    err = row.Scan(&cnt) // Scan into integer variable directly
+    if err != nil {
+        return model.GetTicketListStruct{}, err
+    }
 
-	response := model.GetTicketListStruct{
-		Messages: messages,
-		Total:    cnt,
-	}
-	log.Print(response)
-
-	return response, nil
+    return model.GetTicketListStruct{
+        Messages: messages,
+        Total:    cnt,
+    }, nil
 }

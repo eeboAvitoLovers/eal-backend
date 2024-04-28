@@ -37,7 +37,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// }
 	r.HandleFunc("/login/", urlHandler.LoginHandler).Methods("POST")
 	r.HandleFunc("/register/", urlHandler.CreateUserHandler).Methods("POST")
-	// r.HandleFunc("/logout", urlHandler.LogoutHandler).Methods("GET")
+	r.HandleFunc("/logout/", urlHandler.LogoutHandler).Methods("GET")
 
     // Обработчики для специалистов
 
@@ -63,15 +63,19 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// 	"solved": "solved"
 	// }
 	// response 200 OK
+	// work
 	r.HandleFunc("/ticket/{id}", urlHandler.GetStatusByID).Methods("GET")
 	// обновляет статус тикета на указанный
+	// work
 	r.HandleFunc("/ticket/{id}", urlHandler.UpdateStatusInProcess).Methods("PUT")	
 	// Выводит список сообщений с указанным статусом
-	r.HandleFunc("/ticket/", urlHandler.GetTicketList).Queries("status", "{status}", "offset", "{offset}", "limit", "{limit}").Methods("GET")
+	r.HandleFunc("/tickets", urlHandler.GetTicketList).Queries("status", "{status}", "offset", "{offset}", "limit", "{limit}").Methods("GET")
 	// Присваивает тикет инженеру
+	// work
 	r.HandleFunc("/specialist/{id}/tickets/", urlHandler.GetUnsolvedTicket).Methods("POST")
 	// Выводит список тикетов принадлежащих инженеру
-	r.HandleFunc("/specialist/{id}/tickets/", urlHandler.GetMyTickets).Queries("offset", "{offset}", "limit", "{limit}").Methods("GET")
-
+	// works
+	r.HandleFunc("/specialist/{id}/tickets", urlHandler.GetMyTickets).Queries("offset", "{offset}", "limit", "{limit}").Methods("GET")
+	// TODO
 	r.HandleFunc("/tickets/analytics/", urlHandler.Analytics).Methods("GET")
 }

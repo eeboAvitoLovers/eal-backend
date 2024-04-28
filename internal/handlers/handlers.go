@@ -460,11 +460,12 @@ func (c *MessageController) GetMyTickets(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	log.Print(resolverID)
 	response, err := c.Controller.GetMyTickets(r.Context(), limit, offset, resolverID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
+	log.Print(response)
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(&response)
 	if err != nil {
