@@ -42,8 +42,22 @@
 ## Database scheme
 
 База данных PostgreSQL лежит на арендованном VPS сервере.
+![image](https://github.com/eeboAvitoLovers/eal-backend/assets/145232152/ff7757b9-2672-4a40-8ae1-d70f061670e7)
 
-![image](https://github.com/eeboAvitoLovers/eal-backend/assets/145232152/5c36547e-81f6-42fd-89ff-f5c52a5e26b2)
+## Эндпоинты 
+
+* `GET /me` Отправляет данные о юзере.
+* `POST /register` Регистрирует юзера.
+* `POST /login` Вход в аккаунт, записывает куки и создает сессию.
+* `GET /logout` Выход из аккаунта, удаляет куки.
+* `POST /ticket/` Создание нового обращения.
+* `GET /ticket/{id}` Получение информации об обращении с переданным id.
+* `PUT /ticket/{id}` Обновляет статус и результат обращения.
+* `GET /tickets?status={status}&offset={offset}&limit={limit}` Выводит список обращений с заданным состоянием.
+* `POST /specialist/{id}/tickets` Присваивает обращение инженеру.
+* `GET /specialist/{id}/tickets?offset={offest}&limit={limit}` Показывает список тикетов принадлежащих специалисту.
+* `GET /tickets/analytics` Возвращает аналитику по обращениям.
+
 
 ## TODO:
 1) Протестировать и исправить работу backend составляющей
