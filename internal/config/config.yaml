@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 80
   hostname: 0.0.0.0
   read_timeout: 15
   write_timeout: 15
