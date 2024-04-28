@@ -284,7 +284,7 @@ func (c *Controller) UpdateStatusInProgress(ctx context.Context, ticketID, resol
 	}
 
 	var message model.MessageDTO
-	err = c.Client.QueryRow(ctx, "SELECT id, user_id, update_at, create_at, message, solved, result, resolver_id FROM messages WHERE id = $1", messageID).
+	err = c.Client.QueryRow(ctx, "SELECT id, user_id, update_at, create_at, message, solved, result, resolver_id FROM messages WHERE id = $1", ticketID).
 		Scan(&message.ID, &message.UserID, &message.UpdateAt, &message.CreateAt, &message.Message, &message.Solved, &message.Result, &message.ResolverID)
 	if err != nil {
 		if err.Error() == "no rows in result set" {

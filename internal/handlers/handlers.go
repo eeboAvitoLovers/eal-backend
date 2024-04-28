@@ -362,7 +362,7 @@ func (c *MessageController) GetUnsolvedTicket(w http.ResponseWriter, r *http.Req
 }
 
 func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
 	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -471,27 +471,46 @@ func (c *MessageController) GetMyTickets(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
-// 	type AVGTime struct {
-// 		AiP time.Duration `json:"accepted_in_progress"`
-// 		AS  time.Duration `json:"accepted_solved"`
-// 	}
-// 	type ClosedTickets struct {
-// 		Total     int `json:"total"`
-// 		ThisMonth int `json:"this_month"`
-// 		PrevMonth int `json:"prev_month"`
-// 	}
-// 	type Response struct {
-// 		AVG    AVGTime       `json:"avg_time"`
-// 		Closed ClosedTickets `json:"closed_tickets"`
-// 	}
+func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
+	_, err := c.UserHasAcess(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	
+	type AVGTime struct {
+		AiP time.Duration `json:"accepted_in_progress"`
+		AS  time.Duration `json:"accepted_solved"`
+	}
+	type ClosedTickets struct {
+		Total     int `json:"total"`
+		ThisMonth int `json:"this_month"`
+		PrevMonth int `json:"prev_month"`
+	}
+	type Response struct {
+		AVG    AVGTime       `json:"avg_time"`
+		Closed ClosedTickets `json:"closed_tickets"`
+	}
 
-// 	now := time.Now()
-// 	yesterday := now.Sub(24 * time.Hour)
-// 	time
-// 	var avg AVGTime
-// 	avg = AVGTime{
-// 		AiP: yesterday,
-// 	}
+	now := time.Hour
+	avg := AVGTime{
+		AiP: now,
+		AS: now,
+	}
 
-// }
+	closed := ClosedTickets{
+		Total: 57,
+		ThisMonth: 89,
+		PrevMonth: 97,
+	}
+	avgTime := Response{
+		AVG: avg,
+		Closed: closed,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(avgTime)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+}
