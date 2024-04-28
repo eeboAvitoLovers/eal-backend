@@ -197,10 +197,12 @@ func (c *Controller) GetMetric2(ctx context.Context) (int, error) {
 	defer conn.Release()
 
 	query := `
-	select round(avg(minutes_diff)) 
-    from (select id, cast(EXTRACT(EPOCH FROM max(update_at)-min(update_at)) as int) AS minutes_diff
-            from messages
-           group by id) cte
+		select create_at::date create_at,
+		round(count(*) filter (where solved::text = 'rejected')*100.0 /
+			count(*))::int as percent_of_reject 
+	from messages
+	group by create_at::date
+	order by create_at
 	`
 
 	// Выполнение запроса и получение результата

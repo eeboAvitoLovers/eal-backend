@@ -25,7 +25,7 @@ type MessageController struct {
 // Принимает HTTP-запрос и записывает данные о новом пользователе в базу данных.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	var user model.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -65,7 +65,7 @@ func (c *MessageController) CreateUserHandler(w http.ResponseWriter, r *http.Req
 // Принимает HTTP-запрос, аутентифицирует пользователя и создает новую сессию.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) LoginHandler(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	var user model.UserLogin
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -132,7 +132,7 @@ func (c *MessageController) LoginHandler(w http.ResponseWriter, r *http.Request)
 // Принимает HTTP-запрос и данные нового сообщения.
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -191,6 +191,7 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 // В случае ошибки отправляет соответствующий HTTP-статус и сообщение об ошибке.
 // TODO заменить мапу
 func (c *MessageController) GetStatusByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -234,7 +235,7 @@ func (c *MessageController) UserHasAcess(r *http.Request) (bool, error) {
 }
 
 func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -267,6 +268,7 @@ func (c *MessageController) MeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -302,6 +304,7 @@ func (c *MessageController) GetTicketList(w http.ResponseWriter, r *http.Request
 }
 
 func (c *MessageController) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -319,6 +322,7 @@ func (c *MessageController) LogoutHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (c *MessageController) GetUnsolvedTicket(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -428,6 +432,7 @@ func (c *MessageController) UpdateStatusInProcess(w http.ResponseWriter, r *http
 }
 
 func (c *MessageController) GetMyTickets(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	isEngineer, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -472,6 +477,7 @@ func (c *MessageController) GetMyTickets(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	_, err := c.UserHasAcess(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
