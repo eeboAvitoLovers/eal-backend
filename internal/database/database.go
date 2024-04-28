@@ -139,6 +139,11 @@ func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (
 		return 0, fmt.Errorf("unable to get new id: %w", err)
 	}
 
+	clusterID, err := c.GiveClusterID(ctx, messageID, message.Message)
+	if err != nil {
+		return 0, fmt.Errorf("cannot get clusterID: %w", err)
+	}
+
 	query := `
         INSERT INTO messages (id, message, user_id, create_at, update_at, solved)
         VALUES ($1, $2, $3, $4, $5, $6);
@@ -148,6 +153,15 @@ func (c *Controller) CreateMessage(ctx context.Context, message model.Message) (
 	_, err = c.Client.Exec(ctx, query, messageID, message.Message, message.UserID, message.CreateAt, message.UpdateAt, message.Solved)
 	if err != nil {
 		return 0, fmt.Errorf("unable to create message: %w", err)
+	}
+
+	query = `
+		INSERT INTO clusters (ticket_id, cluster) 
+		VALUES ($1, $2)
+	`
+	_, err = c.Client.Exec(ctx, query, messageID, clusterID)
+	if err != nil {
+		return 0, fmt.Errorf("unable to insert into clusters: %w", err)
 	}
 	return int(messageID), nil
 }

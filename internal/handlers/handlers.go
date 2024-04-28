@@ -168,6 +168,8 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 		ResolverID: 0,
 	}
 
+
+
 	messageID, err := c.Controller.CreateMessage(r.Context(), messageData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -469,4 +471,8 @@ func (c *MessageController) GetMyTickets(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func (c *MessageController) Analytics(w http.ResponseWriter, r *http.Request) {
+	
 }

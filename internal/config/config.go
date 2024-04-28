@@ -13,6 +13,12 @@ import (
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
+	Clusters ClustersConfig `yaml:"clusters"`
+}
+
+type ClustersConfig struct {
+	Port     int    `yaml:"port"`
+	Hostname string `yaml:"hostname"`
 }
 
 // ServerConfig содержит параметры конфигурации сервера.

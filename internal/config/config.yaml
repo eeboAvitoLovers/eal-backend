@@ -9,3 +9,6 @@ database:
   username: eebo
   password: "eebo"
   database_name: eebo
+clusters:
+  hostname: 0.0.0.0
+  port: 80

@@ -1,12 +1,19 @@
 package database
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
 
 	"github.com/eeboAvitoLovers/eal-backend/internal/model"
+	"github.com/eeboAvitoLovers/eal-backend/internal/config"
 )
+
+const configFilename = "./internal/config/config.yaml"
 
 func (c *Controller) GetNewID(ctx context.Context) (int, error) {
 	query := `
@@ -91,4 +98,46 @@ func (c *Controller) GetNewTicket(ctx context.Context, newTicketID int) (model.M
 		return model.MessageDTO{}, err
 	}
 	return message, nil
+}
+
+func (c *Controller) GiveClusterID(ctx context.Context, newTicketID int, message string) (int, error) {
+	data := map[string]interface{}{
+		"message": message,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return 0, fmt.Errorf("unable to send request: %w", err)
+	}
+
+	reqBody := bytes.NewBuffer(jsonData)
+
+	config, err := config.LoadConfig(configFilename)
+	if err != nil {
+		return 0, fmt.Errorf("unable to load config: %w", err)
+	}
+
+	resp, err := http.Post(fmt.Sprintf("%s:%d", config.Clusters.Hostname, config.Clusters.Port), "application/json", reqBody)
+	if err != nil {
+		return 0, fmt.Errorf("unable to send post request: %w", err)
+	}
+
+	type RespStruct struct {
+		Message string `json:"message"`
+		Cluster string `json:"cluster"`
+	}
+
+	var r RespStruct
+
+	err = json.NewDecoder(resp.Body).Decode(&r)
+	if err != nil {
+		return 0, fmt.Errorf("unable to decode response: %w", err)
+	}
+
+	clusterID, err := strconv.Atoi(r.Cluster)
+	if err != nil {
+		return 0, fmt.Errorf("unable to convert clusterID: %w", err)
+	}
+
+	return clusterID, nil
 }

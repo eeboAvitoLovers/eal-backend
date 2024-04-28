@@ -71,8 +71,7 @@ func (a *App) loadRoutes(r *mux.Router) {
 	// Присваивает тикет инженеру
 	r.HandleFunc("/specialist/{id}/tickets/", urlHandler.GetUnsolvedTicket).Methods("POST")
 	// Выводит список тикетов принадлежащих инженеру
-	r.HandleFunc("/specialist/{id}/tickets", urlHandler.GetMyTickets).Queries("offset", "{offset}", "limit", "{limit}").Methods("GET")
+	r.HandleFunc("/specialist/{id}/tickets/", urlHandler.GetMyTickets).Queries("offset", "{offset}", "limit", "{limit}").Methods("GET")
 
-	//TODO
-	// r.HandleFunc("/tickets/analytics", urlHandler.Analytics).Methods("GET")
+	r.HandleFunc("/tickets/analytics/", urlHandler.Analytics).Methods("GET")
 }

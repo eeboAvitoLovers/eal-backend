@@ -15,7 +15,7 @@ const configFilename = "./internal/config/config.yaml"
 
 func main() {
 	// Загружаем конфиг из файла config.yaml
-	config, err := config.LoadConfig(configFilename)
+	Config, err := config.LoadConfig(configFilename)
 	if err != nil {
 		log.Fatal("Error loading config:", err)
 		return
@@ -27,9 +27,9 @@ func main() {
 	defer stop()
 
 	// Создаем новый инстанс приложения 
-	a := app.NewApp(ctx, config.CreateConnString())
+	a := app.NewApp(ctx, Config.CreateConnString())
 
-	err = a.Start(ctx, config)
+	err = a.Start(ctx, Config)
 	if err != nil {
 		log.Fatal("failed to start new app:", err)
 	}
